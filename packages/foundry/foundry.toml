@@ -4,6 +4,9 @@ out = 'out'
 libs = ['lib', 'node_modules']
 fs_permissions = [{ access = "read-write", path = "./"}]
 
+via_ir = true
+optimizer = true
+optimizer_runs = 200
 
 [rpc_endpoints]
 default_network = "http://127.0.0.1:8545"
@@ -27,14 +30,11 @@ scroll = "https://rpc.scroll.io"
 pgn = "https://rpc.publicgoods.network"
 pgnTestnet = "https://sepolia.publicgoods.network"
 
-
 localhost = "http://127.0.0.1:8545"
 
 [etherscan]
 polygonMumbai = { key = "${ETHERSCAN_API_KEY}" }
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
-
-
 
 [fmt]
 line_length = 120
@@ -42,8 +42,5 @@ tab_width = 4
 quote_style = "double"
 bracket_spacing = true
 int_types = "long"
-
-
-
 
 # See more config options https://book.getfoundry.sh/reference/config/overview
