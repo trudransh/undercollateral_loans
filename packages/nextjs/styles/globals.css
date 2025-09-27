@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
@@ -7,63 +8,66 @@
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --retro-shadow: 4px 4px 0px #000000;
+  --retro-shadow-inset: inset 2px 2px 0px #ffffff;
+  --retro-border: 3px solid #000000;
 }
 
 @plugin "daisyui" {
   themes:
-    light,
-    dark --prefersdark;
+    retro-light,
+    retro-dark --prefersdark;
 }
 
 @plugin "daisyui/theme" {
-  name: "light";
+  name: "retro-light";
 
-  --color-primary: #93bbfb;
-  --color-primary-content: #212638;
-  --color-secondary: #dae8ff;
-  --color-secondary-content: #212638;
-  --color-accent: #93bbfb;
-  --color-accent-content: #212638;
-  --color-neutral: #212638;
+  --color-primary: #000000;
+  --color-primary-content: #ffffff;
+  --color-secondary: #ffffff;
+  --color-secondary-content: #000000;
+  --color-accent: #000000;
+  --color-accent-content: #ffffff;
+  --color-neutral: #000000;
   --color-neutral-content: #ffffff;
   --color-base-100: #ffffff;
-  --color-base-200: #f4f8ff;
-  --color-base-300: #dae8ff;
-  --color-base-content: #212638;
-  --color-info: #93bbfb;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
+  --color-base-200: #f5f5f5;
+  --color-base-300: #e0e0e0;
+  --color-base-content: #000000;
+  --color-info: #000000;
+  --color-success: #000000;
+  --color-warning: #666666;
+  --color-error: #000000;
 
-  --radius-field: 9999rem;
-  --radius-box: 1rem;
-  --tt-tailw: 6px;
+  --radius-field: 0;
+  --radius-box: 0;
+  --tt-tailw: 3px;
 }
 
 @plugin "daisyui/theme" {
-  name: "dark";
+  name: "retro-dark";
 
-  --color-primary: #212638;
-  --color-primary-content: #f9fbff;
-  --color-secondary: #323f61;
-  --color-secondary-content: #f9fbff;
-  --color-accent: #4969a6;
-  --color-accent-content: #f9fbff;
-  --color-neutral: #f9fbff;
-  --color-neutral-content: #385183;
-  --color-base-100: #385183;
-  --color-base-200: #2a3655;
-  --color-base-300: #212638;
-  --color-base-content: #f9fbff;
-  --color-info: #385183;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
+  --color-primary: #ffffff;
+  --color-primary-content: #000000;
+  --color-secondary: #000000;
+  --color-secondary-content: #ffffff;
+  --color-accent: #ffffff;
+  --color-accent-content: #000000;
+  --color-neutral: #ffffff;
+  --color-neutral-content: #000000;
+  --color-base-100: #000000;
+  --color-base-200: #1a1a1a;
+  --color-base-300: #333333;
+  --color-base-content: #ffffff;
+  --color-info: #ffffff;
+  --color-success: #ffffff;
+  --color-warning: #999999;
+  --color-error: #ffffff;
 
-  --radius-field: 9999rem;
-  --radius-box: 1rem;
+  --radius-field: 0;
+  --radius-box: 0;
 
-  --tt-tailw: 6px;
+  --tt-tailw: 3px;
   --tt-bg: var(--color-primary);
 }
 
@@ -84,12 +88,20 @@
     border-color: var(--color-gray-200, currentColor);
   }
 
+  * {
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+  }
+
   p {
     margin: 1rem 0;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   body {
     min-height: 100vh;
+    background: var(--color-base-100);
+    color: var(--color-base-content);
+    font-family: 'JetBrains Mono', monospace;
   }
 
   h1,
@@ -97,27 +109,208 @@
   h3,
   h4 {
     margin-bottom: 0.5rem;
-    line-height: 1;
+    line-height: 1.2;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }
 
 :root,
 [data-theme] {
+  background: var(--color-base-100);
+}
+
+/* Retro Button Styles */
+.btn {
+  background: var(--color-secondary);
+  color: var(--color-secondary-content);
+  border: var(--retro-border);
+  box-shadow: var(--retro-shadow);
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: var(--retro-border);
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  background: var(--color-base-300);
+  transform: none;
+  box-shadow: var(--retro-shadow-inset);
+}
+
+/* Retro Card Styles */
+.card {
+  border: var(--retro-border);
+  box-shadow: var(--retro-shadow);
+  border-radius: 0;
+  background: var(--color-base-100);
+}
+
+/* Retro Input Styles */
+.input {
+  border: var(--retro-border);
+  border-radius: 0;
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: var(--retro-shadow-inset);
+}
+
+/* Retro Table Styles */
+.table {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.table th {
+  background: var(--color-base-300);
+  color: var(--color-base-content);
+  border: var(--retro-border);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  border: 1px solid var(--color-base-content);
+}
+
+/* Retro Progress Bar */
+.progress {
+  border: var(--retro-border);
+  border-radius: 0;
   background: var(--color-base-200);
 }
 
-.btn {
-  @apply shadow-md;
+.progress::-webkit-progress-value {
+  background: var(--color-primary);
 }
 
-.btn.btn-ghost {
-  @apply shadow-none;
+/* Retro Modal */
+.modal-box {
+  border: var(--retro-border);
+  box-shadow: var(--retro-shadow);
+  border-radius: 0;
+  background: var(--color-base-100);
 }
 
+/* Retro Alert Styles */
+.alert {
+  border: var(--retro-border);
+  border-radius: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.alert-success {
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  border-color: var(--color-base-content);
+}
+
+.alert-error {
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  border-color: var(--color-base-content);
+}
+
+.alert-warning {
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  border-color: var(--color-base-content);
+}
+
+/* Retro Animations */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.glitch:hover {
+  animation: glitch 0.3s ease-in-out;
+}
+
+/* Retro Text Effects */
+.retro-title {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0px var(--color-base-content);
+}
+
+.retro-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Retro Links */
 .link {
   text-underline-offset: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .link:hover {
   opacity: 80%;
+  text-decoration-style: double;
+}
+
+/* Retro Badge */
+.badge {
+  border: 2px solid var(--color-base-content);
+  border-radius: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Retro Divider */
+.divider {
+  border-color: var(--color-base-content);
+  border-width: 2px;
+  border-style: dashed;
 }
