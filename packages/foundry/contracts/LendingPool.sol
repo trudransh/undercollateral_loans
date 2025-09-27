@@ -34,7 +34,7 @@ contract LendingPool is Ownable, ReentrancyGuard {
     
     uint256 public nextLoanId = 1;
     uint256 public totalLiquidity;
-    uint256 public constant MAX_LTV = 8000; // 80% LTV
+    uint256 public constant MAX_LTV = 80; // 80% LTV
     
     mapping(uint256 => Loan) public loans;
     mapping(address => uint256[]) public userLoans;
@@ -74,32 +74,37 @@ contract LendingPool is Ownable, ReentrancyGuard {
         uint256 duration
     ) external nonReentrant {
         require(amount > 0, "Invalid amount");
-        require(duration > 0, "Invalid duration");
-        require(userToLoan[msg.sender] == 0, "User has active loan");
-        
+        require(duration >= 86400, "Duration too short");
+
         // Calculate max borrowable amount based on ALL user contracts
-        uint256 maxBorrow = _calculateMaxBorrow(msg.sender);
-        require(amount <= maxBorrow, "Amount exceeds limit");
-        
+        uint256 trustScoreValue = trustScore.getUserTrustScore(msg.sender);
+        uint256 totalValue = trustContract.getUserTotalValue(msg.sender);
+
+        // Calculate the maximum borrowable amount based on LTV and trust score
+        // Use trustScoreValue (uint256) and totalValue (uint256) from above
+        // MAX_LTV is in basis points (e.g., 8000 = 80%)
+        uint256 maxBorrowable = (trustScoreValue * 1e18) + ((totalValue * MAX_LTV) / 100);
+
+        require(amount <= maxBorrowable, "Amount exceeds max borrowable");
+
+        trustContract.freezeAllUserContracts(msg.sender, true);
+
         // Create loan
-        uint256 loanId = nextLoanId++;
-        loans[loanId] = Loan({
-            id: loanId,
-            borrower: msg.sender,
-            amount: amount,
-            interestRate: _calculateInterestRate(msg.sender, amount),
-            duration: duration,
-            startTime: block.timestamp,
-            isActive: true,
-            isRepaid: false,
+    uint256 loanId = nextLoanId++;
+    loans[loanId] = Loan({
+        id: loanId,
+        borrower: msg.sender,
+        amount: amount,
+        interestRate: _calculateInterestRate(msg.sender, amount),
+        duration: duration,
+        startTime: block.timestamp,
+        isActive: true,
+        isRepaid: false,
             isPaydayLoan: false
         });
         
         userLoans[msg.sender].push(loanId);
         userToLoan[msg.sender] = loanId;
-        
-        // FREEZE ALL USER'S CONTRACTS
-        trustContract.freezeAllUserContracts(msg.sender, true);
         
         // Transfer funds to borrower
         require(address(this).balance >= amount, "Insufficient liquidity");
