@@ -164,7 +164,7 @@ contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
         uint256 yield1 = yield - yield0;
         
         
-        uint256 penalty = PenaltyLib.exitPenalty(totalStake, ++userExits[msg.sender]);
+       uint256 penalty = PenaltyLib.exitPenalty(totalStake, ++userExits[msg.sender]);
         
     
         trustContract.isActive = false;
