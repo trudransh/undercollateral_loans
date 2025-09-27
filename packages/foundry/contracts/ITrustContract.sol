@@ -7,100 +7,137 @@ pragma solidity ^0.8.20;
  * @dev Contracts earn yield automatically over time. Users only act to EXIT or DEFECT.
  */
 interface ITrustContract {
+    // ============= STRUCTS =============
     
     struct contractView {
-        address addr0;           
-        address addr1;          
-        uint128 stake0;      
-        uint128 stake1;          
-        uint128 accruedYield;   
-        bool isActive;           
-        bool isFrozen;           
-        uint64 createdAt;    
-        uint64 lastYieldUpdate;  
+        address addr0;           // Lower address (sorted)
+        address addr1;           // Higher address (sorted) 
+        uint128 stake0;          // ETH staked by addr0
+        uint128 stake1;          // ETH staked by addr1
+        uint128 accruedYield;    // Total yield accumulated
+        uint32 createdAt;        // Contract creation timestamp
+        uint32 lastYieldUpdate;  // Last yield calculation timestamp
+        bool isActive;           // Contract is active
+        bool isFrozen;           // Contract is frozen (for loans)
     }
- 
+    
+    // ============= CORE FUNCTIONS =============
     
     /**
-     * @notice Create contract with initial stake X (msg.value)
-     * @param partner Address to contract with
+     * @notice Create a new trust contract with a partner
+     * @param partner The address to create contract with
      */
     function createContract(address partner) external payable;
     
     /**
-     * @notice Partner adds stake Y, activates contract and starts automatic yield
-     * @param partner Original contract creator
+     * @notice Add stake to existing contract
+     * @param partner The contract partner
      */
     function addStake(address partner) external payable;
     
     /**
-     * @notice Defect action - steal all funds, heavy penalty ϕ
-     * @param partner Contract partner (victim)
+     * @notice Exit contract - fair withdrawal with mild penalty
+     * @param partner The contract partner
+     */
+    function exit(address partner) external;
+    
+    /**
+     * @notice Defect contract - steal all funds with heavy penalty
+     * @param partner The contract partner
      */
     function defect(address partner) external;
     
-    /**
-     * @notice Exit action - fair split, mild penalty α
-     * @param partner Contract partner
-     */
-    function exit(address partner) external;
-
+    // ============= VIEW FUNCTIONS =============
     
     /**
-     * @notice Get user's total trust score across all contracts
-     * @param user Address to query
-     * @return Trust score based on contract age and TVL
+     * @notice Get contract details by key
+     * @param contractKey The contract key
+     * @return contractData The contract view data
      */
-    function getTrustScore(address user) external view returns (uint256);
+    function getContract(bytes32 contractKey) external view returns (contractView memory);
     
     /**
-     * @notice Project future yield over time period
-     * @param a First address in contract
-     * @param b Second address in contract
-     * @param futureDays Number of days to project
-     * @return Current + projected yield
-     */
-    function getProjectedYield(address a, address b, uint256 futureDays) external view returns (uint256);
-    
-    /**
-     * @notice Get complete contract details with current yield
-     * @param a First address in contract
-     * @param b Second address in contract
-     * @return Contract information with updated yield
-     */
-    function getContractDetails(address a, address b) external view returns (contractView memory);
-    
-    /**
-     * @notice Check if contract is frozen for loan collateral
-     * @param a First address in contract
-     * @param b Second address in contract
-     * @return true if frozen
-     */
-    function isContractFrozen(address a, address b) external view returns (bool);
-
-    
-    /**
-     * @notice Freeze/unfreeze contract (called by loan controller)
-     * @param a First address in contract
-     * @param b Second address in contract
-     * @param freeze true to freeze, false to unfreeze
-     */
-    function freezeContract(address a, address b, bool freeze) external;
-    
-    /**
-     * @notice Generate deterministic key for contract
+     * @notice Get contract key for two addresses
      * @param a First address
      * @param b Second address
-     * @return Unique contract identifier
+     * @return key The contract key
      */
     function getContractKey(address a, address b) external pure returns (bytes32);
-
     
-    event ContractCreated(bytes32 indexed key, address indexed a0, address indexed a1, uint256 initialStake);
-    event ContractActivated(bytes32 indexed key, uint128 stake0, uint128 stake1);
-    event StakeAdded(bytes32 indexed key, address indexed by, uint256 amount);
-    event YieldAccrued(bytes32 indexed key, uint256 yieldAmount, uint256 totalYield);
-    event Defected(bytes32 indexed key, address indexed defector, uint256 stolen, uint256 penalty);
-    event Exited(bytes32 indexed key, address indexed user, uint256 penalty);
-    event ContractFrozen(bytes32 indexed key, bool frozen, address indexed by);
+    /**
+     * @notice Get projected yield for a contract
+     * @param contractKey The contract key
+     * @return yield The projected yield amount
+     */
+    function getProjectedYield(bytes32 contractKey) external view returns (uint256);
+    
+    /**
+     * @notice Check if address is participant in contract
+     * @param contractKey The contract key
+     * @param user The user address
+     * @return isParticipant True if user is participant
+     */
+    function isParticipant(bytes32 contractKey, address user) external view returns (bool);
+    
+    // ============= LENDING FUNCTIONS =============
+    
+    /**
+     * @notice Freeze/unfreeze all contracts for a specific user
+     * @param user The user whose contracts should be frozen/unfrozen
+     * @param freeze True to freeze, false to unfreeze
+     */
+    function freezeAllUserContracts(address user, bool freeze) external;
+    
+    /**
+     * @notice Claim yields from all user's contracts (for liquidation)
+     * @param user The user whose yields should be claimed
+     */
+    function claimAllUserYields(address user) external;
+    
+    /**
+     * @notice Get total value of all user's contracts
+     * @param user The user to calculate total value for
+     * @return totalValue Total value across all user's contracts
+     */
+    function getUserTotalValue(address user) external view returns (uint256);
+    
+    /**
+     * @notice Get all contract keys for a user
+     * @param user The user to get contracts for
+     * @return contractKeys Array of contract keys
+     */
+    function getUserContracts(address user) external view returns (bytes32[] memory);
+    
+    /**
+     * @notice Get contract details by key and user
+     * @param contractKey The contract key
+     * @param user The user to get details for
+     * @return contractData The contract view data
+     */
+    function getContractDetails(bytes32 contractKey, address user) external view returns (contractView memory);
+    
+    // ============= ADMIN FUNCTIONS =============
+    
+    /**
+     * @notice Add a lending contract as authorized caller
+     * @param lender The lending contract address to authorize
+     */
+    function addAuthorizedLender(address lender) external;
+    
+    /**
+     * @notice Remove a lending contract authorization
+     * @param lender The lending contract address to deauthorize
+     */
+    function removeAuthorizedLender(address lender) external;
+    
+    // ============= EVENTS =============
+    
+    event ContractCreated(bytes32 indexed contractKey, address indexed creator, address indexed partner, uint256 amount);
+    event StakeAdded(bytes32 indexed contractKey, address indexed user, uint256 amount);
+    event ContractExited(bytes32 indexed contractKey, address indexed exiter, uint256 amount, uint256 penalty);
+    event ContractDefected(bytes32 indexed contractKey, address indexed defector, uint256 amount, uint256 penalty);
+    event ContractFrozen(bytes32 indexed contractKey, bool frozen, address indexed caller);
+    event YieldsClaimed(bytes32 indexed contractKey, uint256 amount);
+    event LenderAuthorized(address indexed lender);
+    event LenderDeauthorized(address indexed lender);
 }

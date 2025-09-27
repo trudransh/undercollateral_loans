@@ -9,145 +9,92 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 /**
  * @title TrustContract
- * @notice Trust Protocol contracts with passive cooperation model
- * @dev Contracts automatically accrue yield over time. Default state is cooperation.
+ * @notice Core Trust Protocol implementation - passive cooperation model
+ * @dev Contracts earn yield automatically over time. Users only act to EXIT or DEFECT.
  */
 contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     
-    // Constants
-    uint256 public constant DAILY_YIELD_BPS = 100; 
+    // ============= STATE VARIABLES =============
     
-    // Storage
-    mapping(bytes32 => contractView) private contracts;
-    mapping(address => bytes32[]) private userContracts;
-    mapping(address => uint256) private userBreaks;
-    mapping(address => uint256) private userExits;
+    mapping(bytes32 => contractView) public contracts;
     
-    constructor(address initialOwner) Ownable(initialOwner) {}
-   
+    // Track authorized lending contracts
+    mapping(address => bool) public authorizedLenders;
     
-    /**
-     * @notice Calculate automatically accrued yield since last update
-     */
-    function _calculatePendingYield(contractView storage trustContract) internal view returns (uint256) {
-        if (!trustContract.isActive || trustContract.lastYieldUpdate == 0) return 0;
-        
-        uint256 timePassed = block.timestamp - trustContract.lastYieldUpdate;
-        uint256 tvl = uint256(trustContract.stake0) + trustContract.stake1;
-        
-        // Daily yield: 1% of TVL per day
-        uint256 dailyYield = (tvl * DAILY_YIELD_BPS) / 10_000;
-        return (dailyYield * timePassed) / 1 days;
+    // Track all contracts for each user
+    mapping(address => bytes32[]) public userContracts;
+    
+    // ============= MODIFIERS =============
+    
+    modifier onlyAuthorizedLender() {
+        require(
+            msg.sender == owner() || authorizedLenders[msg.sender],
+            "Not authorized lender"
+        );
+        _;
     }
-    
-    /**
-     * @notice Update contract yield (called before any state-changing operation)
-     */
-    function _updateContractYield(bytes32 key) internal {
-        contractView storage trustContract = contracts[key];
-        if (!trustContract.isActive) return;
-        
-        uint256 pendingYield = _calculatePendingYield(trustContract);
-        if (pendingYield > 0) {
-            trustContract.accruedYield += uint128(pendingYield);
-            emit YieldAccrued(key, pendingYield, trustContract.accruedYield);
-        }
-        trustContract.lastYieldUpdate = uint64(block.timestamp);
+
+    constructor() Ownable(msg.sender) {
+        // Constructor sets msg.sender as owner
     }
     
     // ============= CORE FUNCTIONS =============
     
-    function createContract(address partner) external payable nonReentrant {
+    /**
+     * @notice Create a new trust contract with a partner
+     */
+    function createContract(address partner) external payable override nonReentrant {
         require(msg.value > 0, "Zero stake");
-        require(partner != msg.sender && partner != address(0), "Invalid partner");
+        require(partner != address(0), "Invalid partner");
+        require(partner != msg.sender, "Self contract");
         
-        (address a0, address a1) = MathUtils.sortAddresses(msg.sender, partner);
-        bytes32 key = keccak256(abi.encodePacked(a0, a1));
-        
-        require(contracts[key].createdAt == 0, "Contract exists");
-        
-        contractView storage trustContract = contracts[key];
-        trustContract.addr0 = a0;
-        trustContract.addr1 = a1;
-        trustContract.createdAt = uint64(block.timestamp);
-        trustContract.lastYieldUpdate = uint64(block.timestamp); // Will start when activated
-        
-        // Set initial stake
-        if (msg.sender == a0) {
-            trustContract.stake0 = uint128(msg.value);
-        } else {
-            trustContract.stake1 = uint128(msg.value);
-        }
-        
-        emit ContractCreated(key, a0, a1, msg.value);
-    }
-    
-    function addStake(address partner) external payable nonReentrant {
-        require(msg.value > 0, "Zero stake");
-        
-        (address a0, address a1) = MathUtils.sortAddresses(msg.sender, partner);
-        bytes32 key = keccak256(abi.encodePacked(a0, a1));
-        
-        contractView storage trustContract = contracts[key];
-        require(trustContract.createdAt > 0 && !trustContract.isActive, "Invalid state");
-        
-        
-        if (msg.sender == a0) {
-            require(trustContract.stake0 == 0, "Already staked");
-            trustContract.stake0 = uint128(msg.value);
-        } else {
-            require(trustContract.stake1 == 0, "Already staked");  
-            trustContract.stake1 = uint128(msg.value);
-        }
-        
-        
-        if (trustContract.stake0 > 0 && trustContract.stake1 > 0) {
-            trustContract.isActive = true;
-            trustContract.lastYieldUpdate = uint64(block.timestamp); // Start earning NOW
-            
-            userContracts[a0].push(key);
-            userContracts[a1].push(key);
-            
-            emit ContractActivated(key, trustContract.stake0, trustContract.stake1);
-        }
-        
-        emit StakeAdded(key, msg.sender, msg.value);
-    }
-    
-    function defect(address partner) external nonReentrant {
         bytes32 key = getContractKey(msg.sender, partner);
+        require(!contracts[key].isActive, "Contract exists");
         
+        contracts[key] = contractView({
+            addr0: msg.sender < partner ? msg.sender : partner,
+            addr1: msg.sender < partner ? partner : msg.sender,
+            stake0: msg.sender < partner ? uint128(msg.value) : 0,
+            stake1: msg.sender < partner ? 0 : uint128(msg.value),
+            accruedYield: 0,
+            createdAt: uint32(block.timestamp),
+            lastYieldUpdate: uint32(block.timestamp),
+            isActive: true,
+            isFrozen: false
+        });
         
+        // Add to user's contract list
+        userContracts[msg.sender].push(key);
+        userContracts[partner].push(key);
+        
+        emit ContractCreated(key, msg.sender, partner, msg.value);
+    }
+    
+    /**
+     * @notice Add stake to existing contract
+     */
+    function addStake(address partner) external payable override nonReentrant {
+        bytes32 key = getContractKey(msg.sender, partner);
         _updateContractYield(key);
         
         contractView storage trustContract = contracts[key];
         require(trustContract.isActive && !trustContract.isFrozen, "Invalid state");
         require(_isParticipant(trustContract, msg.sender), "Not participant");
         
+        if (trustContract.addr0 == msg.sender) {
+            trustContract.stake0 += uint128(msg.value);
+        } else {
+            trustContract.stake1 += uint128(msg.value);
+        }
         
-        uint256 total = uint256(trustContract.stake0) + trustContract.stake1 + trustContract.accruedYield;
-        uint256 tvl = uint256(trustContract.stake0) + trustContract.stake1;
-        
-        
-        uint256 penalty = PenaltyLib.defectPenalty(0, tvl, ++userBreaks[msg.sender]);
-        
-        // Destroy contract
-        trustContract.isActive = false;
-        trustContract.stake0 = 0;
-        trustContract.stake1 = 0; 
-        trustContract.accruedYield = 0;
-        
-        
-        (bool success,) = payable(msg.sender).call{value: total}("");
-        require(success, "Transfer failed");
-        
-        emit Defected(key, msg.sender, total, penalty);
+        emit StakeAdded(key, msg.sender, msg.value);
     }
     
-    function exit(address partner) external nonReentrant {
+    /**
+     * @notice Exit contract - fair withdrawal with mild penalty
+     */
+    function exit(address partner) external override nonReentrant {
         bytes32 key = getContractKey(msg.sender, partner);
-        
-        
         _updateContractYield(key);
         
         contractView storage trustContract = contracts[key];
@@ -159,99 +106,254 @@ contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
         uint256 yield = trustContract.accruedYield;
         uint256 totalStake = s0 + s1;
         
+        // Calculate user's share
+        uint256 userStake = trustContract.addr0 == msg.sender ? s0 : s1;
+        uint256 userYield = (yield * userStake) / totalStake;
+        uint256 totalWithdrawal = userStake + userYield;
         
-        uint256 yield0 = totalStake > 0 ? (yield * s0) / totalStake : 0;
-        uint256 yield1 = yield - yield0;
+        // Calculate exit penalty (mild)
+        uint256 tBond = _calculateBondScore(key);
+        uint256 penalty = PenaltyLib.exitPenalty(tBond,totalStake, yield);
+        uint256 finalAmount = totalWithdrawal > penalty ? totalWithdrawal - penalty : 0;
         
-        
-       uint256 penalty = PenaltyLib.exitPenalty(totalStake, ++userExits[msg.sender]);
-        
-    
+        // Deactivate contract
         trustContract.isActive = false;
-        trustContract.stake0 = 0;
-        trustContract.stake1 = 0;
-        trustContract.accruedYield = 0;
         
-      
-        if (s0 + yield0 > 0) {
-            (bool ok0,) = payable(trustContract.addr0).call{value: s0 + yield0}("");
-            require(ok0, "Transfer0 failed");
-        }
-        if (s1 + yield1 > 0) {
-            (bool ok1,) = payable(trustContract.addr1).call{value: s1 + yield1}("");
-            require(ok1, "Transfer1 failed");
+        // Transfer funds
+        if (finalAmount > 0) {
+            payable(msg.sender).transfer(finalAmount);
         }
         
-        emit Exited(key, msg.sender, penalty);
+        // Transfer remaining to partner
+        uint256 remaining = totalStake + yield - totalWithdrawal;
+        if (remaining > 0) {
+            payable(partner).transfer(remaining);
+        }
+        
+        emit ContractExited(key, msg.sender, finalAmount, penalty);
     }
     
-  
+    /**
+     * @notice Defect contract - steal all funds with heavy penalty
+     */
+    function defect(address partner) external override nonReentrant {
+        bytes32 key = getContractKey(msg.sender, partner);
+        _updateContractYield(key);
+        
+        contractView storage trustContract = contracts[key];
+        require(trustContract.isActive && !trustContract.isFrozen, "Invalid state");
+        require(_isParticipant(trustContract, msg.sender), "Not participant");
+        
+        uint256 totalAmount = trustContract.stake0 + trustContract.stake1 + trustContract.accruedYield;
+        
+        // Calculate defect penalty (heavy)
+        uint256 tBond = _calculateBondScore(key);
+        uint256 penalty = PenaltyLib.defectPenalty(tBond, totalAmount);
+        uint256 finalAmount = totalAmount > penalty ? totalAmount - penalty : 0;
+        
+        // Deactivate contract
+        trustContract.isActive = false;
+        
+        // Transfer all funds to defector (minus penalty)
+        if (finalAmount > 0) {
+            payable(msg.sender).transfer(finalAmount);
+        }
+        
+        emit ContractDefected(key, msg.sender, finalAmount, penalty);
+    }
     
-    function getTrustScore(address user) external view returns (uint256) {
-        uint256 score;
+    // ============= VIEW FUNCTIONS =============
+    
+    function getContract(bytes32 contractKey) external view override returns (contractView memory) {
+        return contracts[contractKey];
+    }
+
+    function getContractKey(address a, address b) public pure override returns (bytes32) {
+        (address addr0, address addr1) = MathUtils.sortAddresses(a, b);
+        // Use abi.encode instead of abi.encodePacked for safety and type correctness
+        return keccak256(abi.encode(addr0, addr1));
+    }
+
+    function getProjectedYield(bytes32 contractKey) external view override returns (uint256) {
+        return _getProjectedYield(contractKey);
+    }
+    
+    
+    function isParticipant(bytes32 contractKey, address user) external view override returns (bool) {
+        contractView memory contractData = contracts[contractKey];
+        return contractData.addr0 == user || contractData.addr1 == user;
+    }
+    
+    // ============= LENDING FUNCTIONS =============
+    
+    /**
+     * @notice Freeze/unfreeze all contracts for a specific user
+     */
+    function freezeAllUserContracts(address user, bool freeze) external override onlyAuthorizedLender {
         bytes32[] memory userContractKeys = userContracts[user];
         
         for (uint256 i = 0; i < userContractKeys.length; i++) {
-            contractView storage trustContract = contracts[userContractKeys[i]];
-            if (trustContract.isActive) {
-                uint256 tvl = uint256(trustContract.stake0) + trustContract.stake1;
-                
-                uint256 daysActive = (block.timestamp - trustContract.createdAt) / 1 days;
-                score += MathUtils.sqrt(daysActive + 1) * tvl / 100; 
+            bytes32 contractKey = userContractKeys[i];
+            
+            if (contracts[contractKey].isActive) {
+                _updateContractYield(contractKey);
+                contracts[contractKey].isFrozen = freeze;
+                emit ContractFrozen(contractKey, freeze, msg.sender);
             }
         }
-        return score;
     }
     
-    function getProjectedYield(address a, address b, uint256 futureDays) external view returns (uint256) {
-        contractView storage trustContract = contracts[getContractKey(a, b)];
-        if (!trustContract.isActive) return 0;
+    /**
+     * @notice Claim yields from all user's contracts (for liquidation)
+     */
+    function claimAllUserYields(address user) external override onlyAuthorizedLender {
+        bytes32[] memory userContractKeys = userContracts[user];
         
-        uint256 currentYield = trustContract.accruedYield;
-        uint256 pendingYield = _calculatePendingYield(trustContract);
-        
-        uint256 tvl = uint256(trustContract.stake0) + trustContract.stake1;
-        uint256 dailyYield = (tvl * DAILY_YIELD_BPS) / 10_000;
-        uint256 futureYield = dailyYield * futureDays;
-        
-        return currentYield + pendingYield + futureYield;
+        for (uint256 i = 0; i < userContractKeys.length; i++) {
+            bytes32 contractKey = userContractKeys[i];
+            
+            if (contracts[contractKey].isActive && contracts[contractKey].isFrozen) {
+                _claimYields(contractKey);
+            }
+        }
     }
     
-    function getContractDetails(address a, address b) external view returns (contractView memory) {
-        contractView memory trustContract = contracts[getContractKey(a, b)];
+    /**
+     * @notice Get total value of all user's contracts
+     */
+    function getUserTotalValue(address user) external view override returns (uint256) {
+        bytes32[] memory userContractKeys = userContracts[user];
+        uint256 totalValue = 0;
         
-        if (trustContract.isActive) {
-            uint256 pendingYield = _calculatePendingYield(contracts[getContractKey(a, b)]);
-            trustContract.accruedYield += uint128(pendingYield);
+        for (uint256 i = 0; i < userContractKeys.length; i++) {
+            bytes32 contractKey = userContractKeys[i];
+            contractView memory contractData = contracts[contractKey];
+            
+            if (contractData.isActive) {
+                // Calculate user's stake value
+                uint256 userStake = contractData.addr0 == user ? contractData.stake0 : contractData.stake1;
+                uint256 projectedYield = _getProjectedYield(contractKey);
+                uint256 contractValue = userStake + (projectedYield / 2); // User gets half the yield
+                
+                totalValue += contractValue;
+            }
         }
         
-        return trustContract;
+        return totalValue;
     }
     
-    function isContractFrozen(address a, address b) external view returns (bool) {
-        return contracts[getContractKey(a, b)].isFrozen;
+    /**
+     * @notice Get all contract keys for a user
+     */
+    function getUserContracts(address user) external view override returns (bytes32[] memory) {
+        return userContracts[user];
     }
     
-    function freezeContract(address a, address b, bool freeze) external {
-        require(msg.sender == owner(), "Not authorized");
-        bytes32 key = getContractKey(a, b);
+    /**
+     * @notice Get contract details by key and user
+     */
+    function getContractDetails(bytes32 contractKey, address user) external view override returns (contractView memory) {
+        contractView memory contractData = contracts[contractKey];
         
+        // Verify user is participant
+        require(
+            contractData.addr0 == user || contractData.addr1 == user,
+            "Not participant in contract"
+        );
         
-        _updateContractYield(key);
+        return contractData;
+    }
+    
+    // ============= ADMIN FUNCTIONS =============
+    
+    /**
+     * @notice Add a lending contract as authorized caller
+     */
+    function addAuthorizedLender(address lender) external override onlyOwner {
+        require(lender != address(0), "Invalid lender address");
+        authorizedLenders[lender] = true;
+        emit LenderAuthorized(lender);
+    }
+    
+    /**
+     * @notice Remove a lending contract authorization
+     */
+    function removeAuthorizedLender(address lender) external override onlyOwner {
+        authorizedLenders[lender] = false;
+        emit LenderDeauthorized(lender);
+    }
+    
+    // ============= INTERNAL FUNCTIONS =============
+    
+    function _updateContractYield(bytes32 contractKey) internal {
+        contractView storage trustContract = contracts[contractKey];
+        if (!trustContract.isActive) return;
         
-        require(contracts[key].isActive, "Invalid contract");
-        contracts[key].isFrozen = freeze;
-        emit ContractFrozen(key, freeze, msg.sender);
+        uint256 timeElapsed = block.timestamp - trustContract.lastYieldUpdate;
+        uint256 totalStake = trustContract.stake0 + trustContract.stake1;
+        
+        // Simple yield calculation: 1% per year
+        uint256 newYield = (totalStake * timeElapsed * 100) / (365 days * 10000);
+        trustContract.accruedYield += uint128(newYield);
+        trustContract.lastYieldUpdate = uint32(block.timestamp);
     }
     
-    function getContractKey(address a, address b) public pure returns (bytes32) {
-        (address a0, address a1) = MathUtils.sortAddresses(a, b);
-        return keccak256(abi.encodePacked(a0, a1));
+    function _isParticipant(contractView memory contractData, address user) internal pure returns (bool) {
+        return contractData.addr0 == user || contractData.addr1 == user;
     }
     
-    function _isParticipant(contractView memory trustContract, address user) private pure returns (bool) {
-        return trustContract.addr0 == user || trustContract.addr1 == user;
+    function _calculateBondScore(bytes32 contractKey) internal view returns (uint256) {
+        contractView memory contractData = contracts[contractKey];
+        uint256 timeElapsed = block.timestamp - contractData.createdAt;
+        uint256 totalStake = contractData.stake0 + contractData.stake1;
+        
+        // Simplified bond score: sqrt(time) * sqrt(stake)
+        return MathUtils.sqrt(timeElapsed) * MathUtils.sqrt(totalStake) / 100;
     }
     
-    receive() external payable {}
-}
+    function _claimYields(bytes32 contractKey) internal {
+        contractView storage trustContract = contracts[contractKey];
+        require(trustContract.isActive, "Contract inactive");
+        require(trustContract.isFrozen, "Contract not frozen");
+        
+        uint256 totalYield = trustContract.accruedYield;
+        uint256 totalStake = trustContract.stake0 + trustContract.stake1;
+        
+        if (totalYield > 0) {
+            // Distribute yields proportionally
+            uint256 yield0 = (totalYield * trustContract.stake0) / totalStake;
+            uint256 yield1 = totalYield - yield0;
+            
+            // Transfer yields
+            if (yield0 > 0) {
+                payable(trustContract.addr0).transfer(yield0);
+            }
+            if (yield1 > 0) {
+                payable(trustContract.addr1).transfer(yield1);
+            }
+            
+            // Reset yield and slash trust scores
+            trustContract.accruedYield = 0;
+            trustContract.lastYieldUpdate = uint32(block.timestamp);
+            
+            // TODO: Integrate with TrustScore contract to slash scores
+            // trustScore.slashTrustScore(trustContract.addr0, contractKey);
+            // trustScore.slashTrustScore(trustContract.addr1, contractKey);
+            
+            emit YieldsClaimed(contractKey, totalYield);
+        }
+    }
+    
+    function _getProjectedYield(bytes32 contractKey) internal view returns (uint256) {
+        contractView memory contractData = contracts[contractKey];
+        
+        if (!contractData.isActive) return 0;
+        
+        uint256 timeElapsed = block.timestamp - contractData.lastYieldUpdate;
+        uint256 totalStake = contractData.stake0 + contractData.stake1;
+        
+        // Simple yield calculation: 1% per year
+        return (totalStake * timeElapsed * 100) / (365 days * 10000);
+    }
+
+    }
