@@ -1,3 +1,92 @@
+<!-- Pitch Deck Slides (use '---' as slide breaks) -->
+## Slide 1 – Title & One‑liner
+- **Project**: Trust Bond Lending
+- **One‑liner**: Under‑collateralized lending secured by cooperation‑backed trust bonds
+- **Who**: Web3 lenders and borrowers excluded by high collateral requirements
+- **Stack**: Frontend (Scaffold‑ETH 2), Contracts (Foundry)
+
+---
+
+## Slide 2 – Problem
+- High collateral (≥150%) blocks most borrowers
+- On‑chain credit primitives underutilized
+- Lenders face asymmetric downside and poor recovery on defaults
+
+---
+
+## Slide 3 – Solution
+- Trust bonds between partners generate cooperation yield
+- Borrow against active bonds at up to 80% LTV
+- Automated slashing, freezing, and yield‑based recovery protect lenders
+
+---
+
+## Slide 4 – How It Works
+- Passive cooperation: yield accrues while both partners cooperate
+- Penalties: exit (mild) vs defect (heavy) per whitepaper formulas
+- Lending pool prices risk using trust state and trust scores
+
+---
+
+## Slide 5 – Live Demo (≈90s)
+1. Create a trust bond with partner
+2. Show cooperation yield status
+3. Borrow against the bond (80% LTV)
+4. Trigger exit/defect → observe slashing and protections
+5. Lender deposits liquidity and earns yield
+
+---
+
+## Slide 6 – Architecture
+- Contracts: `TrustContract`, `TrustScore`, `LendingPool`
+- Frontend: Next.js + Wagmi + RainbowKit (SE‑2)
+- Data flow: Scaffold‑ETH hooks for reads/writes/events
+
+---
+
+## Slide 7 – Key Features
+- Trust Bonds: create/manage, yield accrual, cooperative state
+- Lending Pool: borrow, lend, manage positions
+- Risk: freezing, slashing, yield‑based recovery
+
+---
+
+## Slide 8 – Security & Risk
+- Reentrancy guards and ownership controls
+- Freezing for turbulent conditions
+- Conservative LTV and yield‑driven recovery
+
+---
+
+## Slide 9 – Roadmap
+- Integrate deployed contracts and real scoring
+- Lender analytics dashboards and oracle feeds
+- Multi‑chain support and identity integrations (ENS/SBTs)
+
+---
+
+## Slide 10 – The Ask
+- Feedback on risk parameters and scoring weights
+- Support to run a guarded testnet launch
+
+---
+
+## Slide 11 – Run Locally
+```bash
+cd packages/nextjs
+yarn install
+yarn dev
+```
+Connect wallet (Sepolia/Goerli), open http://localhost:3000
+
+---
+
+## Slide 12 – Contact
+- Team: <add names/handles>
+- Repo: github.com/trudransh/undercollateral_loans
+
+---
+
 # Trust Bond Lending Pool UI
 
 This is a comprehensive UI for the Trust Protocol's undercollateralized lending system. It allows users to create trust bonds, earn yield through cooperation, and borrow against their trust bonds with minimal collateral requirements.
