@@ -40,39 +40,37 @@ contract TrustContractTest is Test {
         vm.deal(address(lendingPool), 1000 ether);
     }
 
-    function testCreateContract() public {
-        vm.prank(alice);
-        trustContract.createContract{value: 5 ether}(bob);
+function testCreateContract() public {
+    vm.prank(alice);
+    trustContract.createContract{value: 5 ether}(bob);
 
-        bytes32 contractKey = trustContract.getContractKey(alice, bob);
-        ITrustContract.contractView memory contractData = trustContract
-            .getContract(contractKey);
+    bytes32 contractKey = trustContract.getContractKey(alice, bob);
+    ITrustContract.contractView memory contractData = trustContract.getContract(contractKey);
 
-        assertTrue(contractData.isActive);
+    assertTrue(contractData.isActive);
 
-        // Since alice (0x1) < bob (0x2), alice should be addr0
-        assertEq(contractData.addr0, alice);
-        assertEq(contractData.addr1, bob);
-        assertEq(contractData.stake0, 5 ether); // Alice's stake
-        assertEq(contractData.stake1, 0); // Bob's initial stake
-    }
+    // Fix: Bob is addr0 (lower address), Alice is addr1 (higher address)
+    assertEq(contractData.addr0, bob);   // Bob is lower address
+    assertEq(contractData.addr1, alice); // Alice is higher address
+    assertEq(contractData.stake0, 0);    // Bob's initial stake
+    assertEq(contractData.stake1, 5 ether); // Alice's stake
+}
 
-    function testCreateContractWithBobStake() public {
-        vm.startPrank(alice);
-        trustContract.createContract{value: 5 ether}(bob);
-        vm.stopPrank();
+function testCreateContractWithBobStake() public {
+    vm.startPrank(alice);
+    trustContract.createContract{value: 5 ether}(bob);
+    vm.stopPrank();
 
-        vm.prank(bob);
-        trustContract.addStake{value: 3 ether}(alice);
+    vm.prank(bob);
+    trustContract.addStake{value: 3 ether}(alice);
 
-        bytes32 contractKey = trustContract.getContractKey(alice, bob);
-        ITrustContract.contractView memory contractData = trustContract
-            .getContract(contractKey);
+    bytes32 contractKey = trustContract.getContractKey(alice, bob);
+    ITrustContract.contractView memory contractData = trustContract.getContract(contractKey);
 
-        // Alice is addr0 (5 ether), Bob is addr1 (3 ether)
-        assertEq(contractData.stake0, 5 ether); // Alice's stake
-        assertEq(contractData.stake1, 3 ether); // Bob's stake
-    }
+    // Fix: Bob is addr0 (3 ETH), Alice is addr1 (5 ETH)
+    assertEq(contractData.stake0, 3 ether); // Bob's stake
+    assertEq(contractData.stake1, 5 ether); // Alice's stake
+}
 
     function testCreateContractFailsWithZeroStake() public {
         vm.prank(alice);

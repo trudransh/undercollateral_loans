@@ -12,10 +12,14 @@ contract TrustScoreTest is Test {
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
     
-    function setUp() public {
-        trustContract = new TrustContract();
-        trustScore = new TrustScore(address(trustContract));
-    }
+function setUp() public {
+    trustContract = new TrustContract();
+    trustScore = new TrustScore(address(trustContract));
+    
+    // Add this: Fund the accounts
+    vm.deal(alice, 100 ether);
+    vm.deal(bob, 100 ether);
+}
     
     function testTrustScoreCalculation() public {
         vm.startPrank(alice);
