@@ -59,3 +59,35 @@ test:
 verify:
 	forge script script/VerifyAll.s.sol --ffi --rpc-url $(RPC_URL)
 
+# --- Celo Sepolia helpers ---
+.PHONY: deploy-celo-sepolia verify-celo-sepolia
+
+deploy-celo-sepolia:
+	@$(MAKE) deploy DEPLOY_SCRIPT=deployments/DeployCeloSepolia.s.sol
+
+# Deploy + verify on Celo Sepolia in one go (Blockscout)
+.PHONY: deploy-celo-sepolia-verify
+deploy-celo-sepolia-verify:
+	@if [ -z "$(PRIVATE_KEY)" ]; then echo "Missing PRIVATE_KEY=0x..."; exit 1; fi
+	@if [ -z "$(RPC_URL)" ]; then echo "Missing RPC_URL (e.g. https://celo-sepolia.blockpi.network/v1/rpc/public)"; exit 1; fi
+	forge script deployments/DeployCeloSepolia.s.sol \
+		--rpc-url $(RPC_URL) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast \
+		--verify \
+		--verifier blockscout \
+		--verifier-url https://celo-sepolia.blockscout.com/api \
+		--chain-id 11142220 \
+		--ffi || true
+
+# Requires: CONTRACT_TRUST=0x.. CONTRACT_SCORE=0x.. CONTRACT_LENDING=0x..
+verify-celo-sepolia:
+	@if [ -z "$(CONTRACT_TRUST)" ]; then echo "Missing CONTRACT_TRUST=0x..."; exit 1; fi
+	@if [ -z "$(CONTRACT_SCORE)" ]; then echo "Missing CONTRACT_SCORE=0x..."; exit 1; fi
+	@if [ -z "$(CONTRACT_LENDING)" ]; then echo "Missing CONTRACT_LENDING=0x..."; exit 1; fi
+	cast abi-encode "constructor(address)" $(CONTRACT_TRUST) > /tmp/ctor_trustscore.args
+	cast abi-encode "constructor(address,address)" $(CONTRACT_TRUST) $(CONTRACT_SCORE) > /tmp/ctor_lending.args
+	forge verify-contract $(CONTRACT_TRUST) contracts/TrustContract.sol:TrustContract --verifier blockscout --verifier-url https://celo-sepolia.blockscout.com/api --watch --chain-id 11142220 || true
+	forge verify-contract $(CONTRACT_SCORE) contracts/TrustScore.sol:TrustScore --constructor-args $(shell cat /tmp/ctor_trustscore.args) --verifier blockscout --verifier-url https://celo-sepolia.blockscout.com/api --watch --chain-id 11142220 || true
+	forge verify-contract $(CONTRACT_LENDING) contracts/LendingPool.sol:LendingPool --constructor-args $(shell cat /tmp/ctor_lending.args) --verifier blockscout --verifier-url https://celo-sepolia.blockscout.com/api --watch --chain-id 11142220 || true
+

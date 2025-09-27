@@ -30,6 +30,9 @@ scroll = "https://rpc.scroll.io"
 pgn = "https://rpc.publicgoods.network"
 pgnTestnet = "https://sepolia.publicgoods.network"
 
+# Celo Sepolia (chainId 11142220)
+celoSepolia = "https://rpc.sepolia.celo.org"
+
 localhost = "http://127.0.0.1:8545"
 
 [etherscan]
