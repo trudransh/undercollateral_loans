@@ -3,6 +3,7 @@ import { NetworkOptions } from "./NetworkOptions";
 import { getAddress } from "viem";
 import { Address } from "viem";
 import { useAccount, useDisconnect } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ArrowLeftOnRectangleIcon,
   ArrowTopRightOnSquareIcon,
@@ -22,9 +23,9 @@ const BURNER_WALLET_ID = "burnerWallet";
 const allowedNetworks = getTargetNetworks();
 
 type AddressInfoDropdownProps = {
-  address: Address;
-  blockExplorerAddressLink: string | undefined;
-  displayName: string;
+  address?: Address;
+  blockExplorerAddressLink?: string;
+  displayName?: string;
   ensAvatar?: string;
 };
 
@@ -35,8 +36,9 @@ export const AddressInfoDropdown = ({
   blockExplorerAddressLink,
 }: AddressInfoDropdownProps) => {
   const { disconnect } = useDisconnect();
-  const { connector } = useAccount();
-  const checkSumAddress = getAddress(address);
+  const { connector, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const checkSumAddress = address ? getAddress(address) : undefined;
 
   const { copyToClipboard: copyAddressToClipboard, isCopiedToClipboard: isAddressCopiedToClipboard } =
     useCopyToClipboard();
@@ -50,22 +52,35 @@ export const AddressInfoDropdown = ({
 
   useOutsideClick(dropdownRef, closeDropdown);
 
+  // If not connected, render a compact Connect button for navbar usage
+  if (!isConnected || !checkSumAddress) {
+    return (
+      <button
+        className="btn btn-primary btn-sm font-mono"
+        type="button"
+        onClick={() => openConnectModal && openConnectModal()}
+      >
+        Connect Wallet
+      </button>
+    );
+  }
+
   return (
     <>
-      <details ref={dropdownRef} className="dropdown dropdown-end leading-3  ">
+      <details ref={dropdownRef} className="dropdown dropdown-end leading-3">
         <summary className="btn btn-secondary btn-sm pl-0 pr-2 shadow-md dropdown-toggle gap-0 h-auto! bg-white ">
           <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
           <span className="ml-2 mr-1">
             {isENS(displayName) ? displayName : checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4)}
           </span>
-          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0 " />
+          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
         </summary>
-        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-lg  border border-gray-200 rounded-box gap-1">
+        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-lg border border-gray-200 rounded-box gap-1">
           <NetworkOptions hidden={!selectingNetwork} />
           <li className={selectingNetwork ? "hidden" : ""}>
             <div
-              className="h-8 btn-sm flex gap-3 py-3 cursor-pointer bg-white hover:bg-gray-100 text-black rounded-lg bg-white"
-              onClick={() => copyAddressToClipboard(checkSumAddress)}
+              className="h-8 btn-sm flex gap-3 py-3 cursor-pointer bg-white hover:bg-gray-100 text-black rounded-lg"
+              onClick={() => checkSumAddress && copyAddressToClipboard(checkSumAddress)}
             >
               {isAddressCopiedToClipboard ? (
                 <>
@@ -74,8 +89,8 @@ export const AddressInfoDropdown = ({
                 </>
               ) : (
                 <>
-                  <DocumentDuplicateIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-gray-600 bg-white" aria-hidden="true" />
-                  <span className="whitespace-nowrap text-black bg-white">Copy address</span>
+                  <DocumentDuplicateIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-gray-600" aria-hidden="true" />
+                  <span className="whitespace-nowrap text-black">Copy address</span>
                 </>
               )}
             </div>
