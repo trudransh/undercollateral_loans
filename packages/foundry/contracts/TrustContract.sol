@@ -12,8 +12,8 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     uint256 public constant COOPERATE_YIELD_BPS = 100; // 1% TVL per cooperate
     
     
-    mapping(bytes32 => contractView) private bonds;
-    mapping(address => bytes32[]) private userBonds;
+    mapping(bytes32 => contractView) private contracts;
+    mapping(address => bytes32[]) private userContracts;
     mapping(address => uint256) private userBreaks;
     mapping(address => uint256) private userExits;
     
@@ -28,9 +28,9 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
         (address a0, address a1) = MathUtils.sortAddresses(msg.sender, partner);
         bytes32 key = keccak256(abi.encodePacked(a0, a1));
         
-        require(bonds[key].createdAt == 0, "Bond exists");
+        require(contracts[key].createdAt == 0, "Bond exists");
         
-        contractView storage bond = bonds[key];
+        contractView storage bond = contracts[key];
         bond.addr0 = a0;
         bond.addr1 = a1;
         bond.createdAt = uint64(block.timestamp);
@@ -52,7 +52,7 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
         (address a0, address a1) = MathUtils.sortAddresses(msg.sender, partner);
         bytes32 key = keccak256(abi.encodePacked(a0, a1));
         
-        contractView storage bond = bonds[key];
+        contractView storage bond = contracts[key];
         require(bond.createdAt > 0 && !bond.isActive, "Invalid state");
         
         
@@ -67,8 +67,8 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
         
         if (bond.stake0 > 0 && bond.stake1 > 0) {
             bond.isActive = true;
-            userBonds[a0].push(key);
-            userBonds[a1].push(key);
+            userContracts[a0].push(key);
+            userContracts[a1].push(key);
             emit BondActivated(key, bond.stake0, bond.stake1);
         }
         
@@ -77,7 +77,7 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     
     function cooperate(address partner) external {
         bytes32 key = getBondKey(msg.sender, partner);
-        contractView storage bond = bonds[key];
+        contractView storage bond = contracts[key];
         
         require(bond.isActive && !bond.isFrozen, "Invalid state");
         require(_isParticipant(bond, msg.sender), "Not participant");
@@ -97,7 +97,7 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     
     function defect(address partner) external nonReentrant {
         bytes32 key = getBondKey(msg.sender, partner);
-        contractView storage bond = bonds[key];
+        contractView storage bond = contracts[key];
         
         require(bond.isActive && !bond.isFrozen, "Invalid state");
         require(_isParticipant(bond, msg.sender), "Not participant");
@@ -123,7 +123,7 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     
     function exit(address partner) external nonReentrant {
         bytes32 key = getBondKey(msg.sender, partner);
-        contractView storage bond = bonds[key];
+        contractView storage bond = contracts[key];
         
         require(bond.isActive && !bond.isFrozen, "Invalid state");
         require(_isParticipant(bond, msg.sender), "Not participant");
@@ -162,9 +162,9 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     
     function getTrustScore(address user) external view returns (uint256) {
         uint256 score;
-        bytes32[] memory userBondKeys = userBonds[user];
+        bytes32[] memory userBondKeys = userContracts[user];
         for (uint256 i = 0; i < userBondKeys.length; i++) {
-            contractView storage bond = bonds[userBondKeys[i]];
+            contractView storage bond = contracts[userBondKeys[i]];
             if (bond.isActive) {
                 uint256 tvl = uint256(bond.stake0) + bond.stake1;
                 score += MathUtils.sqrt(bond.t) * tvl / 100;
@@ -175,7 +175,7 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     }
     
     function getProjectedYield(address a, address b, uint256 rounds) external view returns (uint256) {
-        contractView memory bond = bonds[getBondKey(a, b)];
+        contractView memory bond = contracts[getBondKey(a, b)];
         if (!bond.isActive) return 0;
         
         uint256 tvl = uint256(bond.stake0) + bond.stake1;
@@ -184,18 +184,18 @@ abstract contract TrustContract is ITrustContract, Ownable, ReentrancyGuard {
     }
     
     function getBondDetails(address a, address b) external view returns (contractView memory) {
-        return bonds[getBondKey(a, b)];
+        return contracts[getBondKey(a, b)];
     }
     
     function isBondFrozen(address a, address b) external view returns (bool) {
-        return bonds[getBondKey(a, b)].isFrozen;
+        return contracts[getBondKey(a, b)].isFrozen;
     }
     
     function freezeBond(address a, address b, bool freeze) external {
         require(msg.sender == owner(), "Not authorized"); 
         bytes32 key = getBondKey(a, b);
-        require(bonds[key].isActive, "Invalid bond");
-        bonds[key].isFrozen = freeze;
+        require(contracts[key].isActive, "Invalid bond");
+        contracts[key].isFrozen = freeze;
         emit BondFrozen(key, freeze, msg.sender);
     }
     
