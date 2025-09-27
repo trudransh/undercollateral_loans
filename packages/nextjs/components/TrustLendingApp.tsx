@@ -85,35 +85,31 @@ const TrustLendingApp = () => {
       {/* Enhanced Retro Navigation Header */}
       <nav className="bg-base-100 border-b-4 border-base-content shadow-lg">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center py-4 space-y-4 lg:space-y-0">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center py-3 space-y-3 lg:space-y-0">
             
             {/* Left Section - Logo and Navigation */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-8">
-              <div className="flex items-center space-x-4">
-                <h1 className="retro-title text-2xl lg:text-3xl glitch">LENDING_w3.0</h1>
-                {/* <div className="badge badge-outline font-mono text-xs">
-                  v3.2.1_BETA
-                </div> */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
+              <div className="flex items-center space-x-3">
+                <h1 className="retro-title text-xl lg:text-2xl font-bold font-mono tracking-wider">LENDING_W3.0</h1>
               </div>
               
               {/* Main Navigation Tabs */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex space-x-1">
                 {[
-                  { key: 'overview', label: 'OVERVIEW', icon: '◉' },
-                  { key: 'bonds', label: 'TRUST_BONDS', icon: '⬢' },
+                  { key: 'overview', label: 'OVERVIEW', icon: '●' },
+                  { key: 'bonds', label: 'TRUST_BONDS', icon: '◆' },
                   { key: 'lending', label: 'LENDING_POOL', icon: '₿' }
                 ].map((item) => (
                   <button
                     key={item.key}
                     onClick={() => setActiveView(item.key as any)}
-                    className={`btn btn-sm font-mono transition-all duration-200 ${
+                    className={`px-3 py-2 border-2 font-mono text-xs font-bold transition-all ${
                       activeView === item.key
-                        ? 'btn-primary shadow-lg transform scale-105'
-                        : 'btn-ghost hover:btn-outline'
+                        ? 'border-primary bg-primary text-primary-content'
+                        : 'border-base-content bg-base-100 hover:bg-base-200'
                     }`}
                   >
-                    <span className="mr-1">{item.icon}</span>
-                    [{item.label}]
+                    {item.icon} [{item.label}]
                   </button>
                 ))}
               </div>
@@ -138,80 +134,55 @@ const TrustLendingApp = () => {
             </div>
 
             {/* Right Section - User Dashboard */}
-            <div className="flex flex-col space-y-3 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-3">
+            <div className="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-2">
               
-              {/* Market Data Panel */}
-              <div className="flex space-x-2">
-                {/* ETH Price Ticker */}
-                <div className="border-2 border-base-content p-2 bg-base-100 min-w-fit">
-                  <div className="font-mono text-xs">
-                    <div className="text-center mb-1 text-primary">ETH/USD</div>
-                    <div className="text-sm font-bold blink">
-                      ${ethPriceUSD.toFixed(2)}
-                    </div>
-                  </div>
+              {/* Data Display Panels */}
+              <div className="flex space-x-1">
+                {/* ETH Price */}
+                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
+                  <div className="text-xs opacity-75">ETH/USD</div>
+                  <div className="text-sm font-bold">${ethPriceUSD.toFixed(2)}</div>
                 </div>
-              </div>
-
-              {/* Wallet Stats Panel */}
-              <div className="grid grid-cols-2 lg:flex lg:space-x-2 gap-2 lg:gap-0">
+                
                 {/* Wallet Balance */}
-                <div className="border-2 border-base-content p-2 bg-base-100">
-                  <div className="font-mono text-xs">
-                    <div className="text-center mb-1">BALANCE</div>
-                    <div className="text-sm font-bold">
-                      {balance ? parseFloat(formatEther(balance.value)).toFixed(3) : '0.000'}
-                    </div>
-                    <div className="text-xs text-center opacity-75">
-                      ${balance ? ethToUSD(parseFloat(formatEther(balance.value))).slice(0, 6) : '0.00'}
-                    </div>
+                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
+                  <div className="text-xs opacity-75">BALANCE</div>
+                  <div className="text-sm font-bold">
+                    {balance ? parseFloat(formatEther(balance.value)).toFixed(3) : '0.000'}
                   </div>
                 </div>
                 
                 {/* Trust Bonds */}
-                <div className="border-2 border-base-content p-2 bg-base-100">
-                  <div className="font-mono text-xs">
-                    <div className="text-center mb-1">BONDS</div>
-                    <div className="text-sm font-bold text-primary">
-                      {totalBonds}
-                    </div>
-                    <div className="text-xs text-center opacity-75">
-                      {totalBondValue}Ξ
-                    </div>
-                  </div>
+                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
+                  <div className="text-xs opacity-75">BONDS</div>
+                  <div className="text-sm font-bold text-primary">{totalBonds}</div>
                 </div>
                 
-                {/* Total Portfolio Value */}
-                <div className="border-2 border-base-content p-2 bg-base-100 col-span-2 lg:col-span-1">
-                  <div className="font-mono text-xs">
-                    <div className="text-center mb-1">PORTFOLIO</div>
-                    <div className="text-sm font-bold">
-                      {(parseFloat(balance ? formatEther(balance.value) : '0') + totalBondValue).toFixed(2)}Ξ
-                    </div>
-                    <div className="text-xs text-center opacity-75">
-                      ${ethToUSD(parseFloat(balance ? formatEther(balance.value) : '0') + totalBondValue)}
-                    </div>
+                {/* Portfolio Value */}
+                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
+                  <div className="text-xs opacity-75">PORTFOLIO</div>
+                  <div className="text-sm font-bold">
+                    {(parseFloat(balance ? formatEther(balance.value) : '0') + totalBondValue).toFixed(2)}Ξ
                   </div>
                 </div>
               </div>
               
-              {/* User Profile Section */}
-              <div className="flex items-center space-x-2">
+              {/* User Status & Controls */}
+              <div className="flex items-center space-x-1">
                 {/* Connection Status */}
-                <div className="flex items-center space-x-2">
+                <div className="border-2 border-base-content px-2 py-2 bg-base-100 flex items-center space-x-1">
                   <div className="w-2 h-2 bg-primary rounded-full blink"></div>
                   <span className="font-mono text-xs">ONLINE</span>
                 </div>
                 
-                {/* User Address Badge */}
-                <div className="badge badge-outline font-mono text-xs">
-                  <span className="mr-1">👤</span>
-                  {address?.slice(0, 4)}...{address?.slice(-4)}
+                {/* User Address */}
+                <div className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs">
+                  👤 {address?.slice(0, 4)}...{address?.slice(-4)}
                 </div>
                 
-                {/* Quick Actions Dropdown */}
+                {/* Actions Menu */}
                 <div className="dropdown dropdown-end">
-                  <div tabIndex={0} role="button" className="btn btn-sm btn-ghost font-mono">
+                  <div tabIndex={0} role="button" className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs hover:bg-base-200 cursor-pointer">
                     [⋮]
                   </div>
                   <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 border-2 border-base-content w-52 font-mono text-sm">
