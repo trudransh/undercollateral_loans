@@ -121,3 +121,79 @@ Currently uses mock data for demonstration. To integrate with actual smart contr
 3. **Advanced Analytics**: Add charts for yield performance and risk metrics  
 4. **Mobile Optimization**: Enhance mobile user experience
 5. **Multi-chain Support**: Extend to additional EVM networks
+
+## Hackathon Pitch Deck (Judge-Friendly)
+
+Use this section as a ready-to-build outline for your presentation deck. Each slide has a clear goal, suggested talking points, and demo checkpoints. Target a 4–6 minute walkthrough.
+
+### Slide 1 – Title & One‑liner
+- **Project name**: Trust Bond Lending
+- **One‑liner**: Under‑collateralized lending secured by cooperation-backed trust bonds
+- **Who for**: Web3 lenders and borrowers locked out by high collateral requirements
+
+### Slide 2 – Problem
+- High collateral requirements (≥150%) exclude most borrowers
+- On‑chain credit is scarce; identity/reputation is underused
+- Lenders face asymmetric downside and poor recovery on defaults
+
+### Slide 3 – Solution
+- Trust bonds: pair users, stake, and accrue cooperation yield
+- Borrow against active trust bonds with lower collateral (up to 80% LTV)
+- Automated slashing, freezing, and yield‑based recovery protect lenders
+
+### Slide 4 – How It Works (Game Theory → Contracts → UI)
+- Passive cooperation model: yield accrues while both parties remain cooperative
+- Penalties: exit (mild) vs. defect (heavy) based on whitepaper formulas
+- Lending pool uses trust bond state and trust scores to price risk
+
+### Slide 5 – Live Demo Plan (90 seconds)
+1. Create a trust bond with a partner address
+2. Show yield accrual and cooperation status
+3. Borrow against the bond at 80% LTV
+4. Trigger a defect/exit scenario → observe slashing and protections
+5. Lender deposits liquidity and earns predictable yield
+
+### Slide 6 – Architecture
+- Contracts: `TrustContract`, `TrustScore`, `LendingPool`
+- Frontend: Next.js + Wagmi + RainbowKit (SE‑2)
+- Data flow: contract reads/writes via Scaffold‑ETH hooks
+
+### Slide 7 – Why Now / Differentiation
+- Combines incentive‑aligned game theory with risk controls
+- Recovery via yield rather than pure liquidation
+- Works with social/identity primitives without requiring full KYC
+
+### Slide 8 – Security & Risk Mitigations
+- Reentrancy guards and ownership controls
+- Freezing mechanism for turbulent conditions
+- Yield‑driven recovery and conservative LTV thresholds
+
+### Slide 9 – Roadmap
+- Integrate deployed contracts, real scoring, and oracle feeds
+- Advanced analytics for lenders and risk dashboards
+- Multi‑chain support and identity integrations (e.g., ENS, SBTs)
+
+### Slide 10 – The Ask
+- Feedback on risk parameters and scoring weights
+- Mentorship or grants to run a guarded launch on testnet
+
+### Backup Slides (Optional)
+- Formulas (defect/exit penalties, yield) and parameter table
+- Contract interfaces and key events
+- Threat model and mitigation coverage
+- Glossary of terms: trust bond, cooperation yield, LTV, freeze
+
+### Demo Script (Quick Reference)
+- 0:00 – One‑liner and problem framing
+- 0:30 – Create trust bond (enter partner address, stake)
+- 1:30 – Show cooperation yield ticking and trust state
+- 2:00 – Borrow flow: select bond → set amount → confirm
+- 2:45 – Trigger exit/defect → show slashing and lender protection
+- 3:30 – Lender deposit → see APR and pool utilization
+- 4:00 – Q&A: risks, recovery, roadmap
+
+### Assets to Prepare
+- Network and contract addresses (testnet)
+- 2–3 screenshots/GIFs of the flows above
+- Simple architecture diagram and penalty table
+- A one‑pager link in the repo pointing to this section

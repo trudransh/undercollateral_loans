@@ -58,24 +58,24 @@ export const AddressInfoDropdown = ({
           <span className="ml-2 mr-1">
             {isENS(displayName) ? displayName : checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4)}
           </span>
-          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0 bg-white " />
+          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0 " />
         </summary>
-        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-lg bg-white border border-gray-200 rounded-box gap-1">
+        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-lg  border border-gray-200 rounded-box gap-1">
           <NetworkOptions hidden={!selectingNetwork} />
           <li className={selectingNetwork ? "hidden" : ""}>
             <div
-              className="h-8 btn-sm flex gap-3 py-3 cursor-pointer bg-white hover:bg-gray-100 text-black rounded-lg"
+              className="h-8 btn-sm flex gap-3 py-3 cursor-pointer bg-white hover:bg-gray-100 text-black rounded-lg bg-white"
               onClick={() => copyAddressToClipboard(checkSumAddress)}
             >
               {isAddressCopiedToClipboard ? (
                 <>
-                  <CheckCircleIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-green-600" aria-hidden="true" />
+                  <CheckCircleIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-green-600 " aria-hidden="true" />
                   <span className="whitespace-nowrap text-black">Copied!</span>
                 </>
               ) : (
                 <>
-                  <DocumentDuplicateIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-gray-600" aria-hidden="true" />
-                  <span className="whitespace-nowrap text-black">Copy address</span>
+                  <DocumentDuplicateIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0 text-gray-600 bg-white" aria-hidden="true" />
+                  <span className="whitespace-nowrap text-black bg-white">Copy address</span>
                 </>
               )}
             </div>
