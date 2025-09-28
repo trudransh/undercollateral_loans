@@ -9,7 +9,6 @@ Today, most on‑chain credit requires 150%+ collateral. That excludes the peopl
 ### What’s in the box
 - Smart contracts (Foundry) that model cooperative bonds, trust scoring, and a lending pool.
 - A clean, black‑and‑white Next.js app (Scaffold‑ETH 2) that’s fast to demo and easy to reason about.
-- A judge‑friendly pitch view at `/pitch` with keyboard navigation.
 
 ---
 
@@ -74,6 +73,10 @@ make verify-celo-sepolia \
 ```
 
 After deploying, update `packages/nextjs/contracts/deployedContracts.ts` and reload the app.
+---
+Deployed and Verified Contracts on Celo Sepolia:
+Trust Contract  : https://celo-sepolia.blockscout.com/address/0xe2726ce1021b21b231562c001a1ecfaa9c9893e2?tab=contract Trust Score:  https://celo-sepolia.blockscout.com/address/0x6cbc62fc95208c4137c928e2a0079836c50f0d14
+Lending Pool: https://celo-sepolia.blockscout.com/address/0x273be2224de0dd294c9885ec3d169ab0c7a0181c
 
 ---
 
