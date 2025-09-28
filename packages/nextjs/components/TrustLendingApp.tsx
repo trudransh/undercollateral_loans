@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
 import { formatEther } from "viem";
 import LendingPoolDashboard from "./LendingPoolDashboard_New";
@@ -8,7 +9,9 @@ import TrustBondManager from "./TrustBondManager";
 
 const TrustLendingApp = () => {
   const { address, isConnected } = useAccount();
-  const [activeView, setActiveView] = useState<'overview' | 'bonds' | 'lending'>('overview');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const viewParam = (searchParams?.get('view') || 'overview') as 'overview' | 'bonds' | 'lending';
   const [totalBonds, setTotalBonds] = useState(0);
   const [totalBondValue, setTotalBondValue] = useState(0);
   const [ethPriceUSD, setEthPriceUSD] = useState(2400); // Mock ETH price in USD
@@ -82,78 +85,9 @@ const TrustLendingApp = () => {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* Header moved to global Header component */}
-      {/* Right Section - User Dashboard */}
-            <div className="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-2">
-              
-              {/* Data Display Panels */}
-              <div className="flex space-x-1">
-                {/* ETH Price */}
-                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
-                  <div className="text-xs opacity-75">ETH/USD</div>
-                  <div className="text-sm font-bold">${ethPriceUSD.toFixed(2)}</div>
-                </div>
-                
-                {/* Wallet Balance */}
-                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
-                  <div className="text-xs opacity-75">BALANCE</div>
-                  <div className="text-sm font-bold">
-                    {balance ? parseFloat(formatEther(balance.value)).toFixed(3) : '0.000'}
-                  </div>
-                </div>
-                
-                {/* Trust Bonds */}
-                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
-                  <div className="text-xs opacity-75">BONDS</div>
-                  <div className="text-sm font-bold text-primary">{totalBonds}</div>
-                </div>
-                
-                {/* Portfolio Value */}
-                <div className="border-2 border-base-content px-3 py-2 bg-base-100 font-mono">
-                  <div className="text-xs opacity-75">PORTFOLIO</div>
-                  <div className="text-sm font-bold">
-                    {(parseFloat(balance ? formatEther(balance.value) : '0') + totalBondValue).toFixed(2)}Ξ
-                  </div>
-                </div>
-              </div>
-              
-              {/* User Status & Controls */}
-              <div className="flex items-center space-x-1">
-                {/* Connection Status */}
-                {/* <div className="border-2 border-base-content px-2 py-2 bg-base-100 flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-primary rounded-full blink"></div>
-                  <span className="font-mono text-xs">ONLINE</span>
-                </div> */}
-                
-                {/* User Address */}
-                {/* <div className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs">
-                  👤 {address?.slice(0, 4)}...{address?.slice(-4)}
-                </div> */}
-                
-                {/* Actions Menu */}
-                {/* <div className="dropdown dropdown-end">
-                  <div tabIndex={0} role="button" className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs hover:bg-base-200 cursor-pointer">
-                    [⋮]
-                  </div>
-                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 border-2 border-base-content w-52 font-mono text-sm">
-                    <li><a href="#" className="hover:bg-base-200">[📋] COPY_ADDRESS</a></li>
-                    <li><a href="#" className="hover:bg-base-200">[🔗] VIEW_ON_EXPLORER</a></li>
-                    <li><a href="#" className="hover:bg-base-200">[📊] TRANSACTION_HISTORY</a></li>
-                    <li><a href="#" className="hover:bg-base-200">[⚙️] SETTINGS</a></li>
-                    <li className="border-t border-base-content mt-2 pt-2">
-                      <a href="#" className="hover:bg-red-100 text-error">[🚪] DISCONNECT</a>
-                    </li>
-                  </ul>
-                </div> */}
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {activeView === 'overview' && (
+        {viewParam === 'overview' && (
           <div className="space-y-8">
             {/* Hero Section */}
             <div className="text-center mb-12">
@@ -438,7 +372,7 @@ const TrustLendingApp = () => {
                   {'>'} ESTABLISH_COOPERATION_PROTOCOLS
                 </div>
                 <button 
-                  onClick={() => setActiveView('bonds')}
+                  onClick={() => router.push('/?view=bonds')}
                   className="btn btn-primary w-full glitch"
                 >
                   [ACCESS_TRUST_BONDS]
@@ -453,7 +387,7 @@ const TrustLendingApp = () => {
                   {'>'} ACCESS_UNDERCOLLATERALIZED_LOANS
                 </div>
                 <button 
-                  onClick={() => setActiveView('lending')}
+                  onClick={() => router.push('/?view=lending')}
                   className="btn btn-primary w-full glitch"
                 >
                   [ACCESS_LENDING_POOL]
@@ -463,9 +397,9 @@ const TrustLendingApp = () => {
           </div>
         )}
 
-        {activeView === 'bonds' && <TrustBondManager />}
-        {activeView === 'lending' && <LendingPoolDashboard />}
-      </main>
+        {viewParam === 'bonds' && <TrustBondManager />}
+        {viewParam === 'lending' && <LendingPoolDashboard />}
+        </main>
 
       {/* System Features Modal */}
       {showFeaturesModal && (
