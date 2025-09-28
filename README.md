@@ -1,7 +1,7 @@
 ## Trust Bond Lending
 Undercollateralized lending, built on cooperative trust.
 
-We’re exploring a simple idea with big implications: if two people choose to cooperate on‑chain, that cooperation itself can secure credit. Our protocol lets users form “trust bonds,” earn yield while both sides behave, and unlock borrowing power without over‑collateralizing their lives.
+We’re exploring a simple idea with big implications: if two people choose to cooperate on‑chain, that cooperation itself can secure credit. Our protocol lets users form “trust contracts,” earn yield while both sides behave, and unlock borrowing power without over‑collateralizing their lives.
 
 ### Why this matters
 Today, most on‑chain credit requires 150%+ collateral. That excludes the people who need it most. By using incentives instead of hard collateral alone—think: cooperation yield, fair exits, and slashing for bad behavior—we can make credit more inclusive without making lenders reckless.

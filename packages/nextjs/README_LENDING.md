@@ -1,7 +1,7 @@
 <!-- Pitch Deck Slides (use '---' as slide breaks) -->
 ## Slide 1 – Title & One‑liner
 - **Project**: Trust Bond Lending
-- **One‑liner**: Under‑collateralized lending secured by cooperation‑backed trust bonds
+- **One‑liner**: Under‑collateralized lending secured by cooperation‑backed Trust contracts
 - **Who**: Web3 lenders and borrowers excluded by high collateral requirements
 - **Stack**: Frontend (Scaffold‑ETH 2), Contracts (Foundry)
 
@@ -15,7 +15,7 @@
 ---
 
 ## Slide 3 – Solution
-- Trust bonds between partners generate cooperation yield
+- Trust contracts between partners generate cooperation yield
 - Borrow against active bonds at up to 80% LTV
 - Automated slashing, freezing, and yield‑based recovery protect lenders
 
@@ -45,7 +45,7 @@
 ---
 
 ## Slide 7 – Key Features
-- Trust Bonds: create/manage, yield accrual, cooperative state
+- Trust contracts: create/manage, yield accrual, cooperative state
 - Lending Pool: borrow, lend, manage positions
 - Risk: freezing, slashing, yield‑based recovery
 
@@ -89,18 +89,18 @@ Connect wallet (Sepolia/Goerli), open http://localhost:3000
 
 # Trust Bond Lending Pool UI
 
-This is a comprehensive UI for the Trust Protocol's undercollateralized lending system. It allows users to create trust bonds, earn yield through cooperation, and borrow against their trust bonds with minimal collateral requirements.
+This is a comprehensive UI for the Trust Protocol's undercollateralized lending system. It allows users to create Trust contracts, earn yield through cooperation, and borrow against their Trust contracts with minimal collateral requirements.
 
 ## Features
 
 ### 🤝 Trust Bond Management
-- **Create Trust Bonds**: Partner with trusted individuals to create mutual stake bonds
+- **Create Trust contracts**: Partner with trusted individuals to create mutual stake bonds
 - **Passive Yield**: Earn 1% daily yield automatically through cooperation
 - **Fair Exit**: Exit bonds with mild penalties for fair wealth splitting  
 - **Defection Detection**: Heavy penalties for defecting to protect partner funds
 
 ### 💰 Lending Pool Operations
-- **Borrow Against Bonds**: Use trust bonds as collateral for up to 80% LTV loans
+- **Borrow Against Bonds**: Use Trust contracts as collateral for up to 80% LTV loans
 - **Competitive Rates**: 5.5% APR interest rates for trust bond backed loans
 - **Lend to Earn**: Provide liquidity to earn guaranteed yields from borrower interest
 
@@ -143,8 +143,8 @@ This is a comprehensive UI for the Trust Protocol's undercollateralized lending 
 - Risk management feature descriptions
 - Quick navigation to other features
 
-#### Trust Bonds Tab  
-- Create new trust bonds with partners
+#### Trust contracts Tab  
+- Create new Trust contracts with partners
 - View and manage existing bonds
 - Monitor yield accrual and cooperation status
 - Execute exits and defections
@@ -167,7 +167,7 @@ The UI integrates with the Trust Protocol smart contracts:
 ## Risk Mitigation Features
 
 ### Automated Slashing
-- Defection from trust bonds triggers automatic penalty
+- Defection from Trust contracts triggers automatic penalty
 - Funds redistributed to protect honest participants
 - Heavy penalties (ϕ) discourage malicious behavior
 
@@ -217,7 +217,7 @@ Use this section as a ready-to-build outline for your presentation deck. Each sl
 
 ### Slide 1 – Title & One‑liner
 - **Project name**: Trust Bond Lending
-- **One‑liner**: Under‑collateralized lending secured by cooperation-backed trust bonds
+- **One‑liner**: Under‑collateralized lending secured by cooperation-backed Trust contracts
 - **Who for**: Web3 lenders and borrowers locked out by high collateral requirements
 
 ### Slide 2 – Problem
@@ -226,8 +226,8 @@ Use this section as a ready-to-build outline for your presentation deck. Each sl
 - Lenders face asymmetric downside and poor recovery on defaults
 
 ### Slide 3 – Solution
-- Trust bonds: pair users, stake, and accrue cooperation yield
-- Borrow against active trust bonds with lower collateral (up to 80% LTV)
+- Trust contracts: pair users, stake, and accrue cooperation yield
+- Borrow against active Trust contracts with lower collateral (up to 80% LTV)
 - Automated slashing, freezing, and yield‑based recovery protect lenders
 
 ### Slide 4 – How It Works (Game Theory → Contracts → UI)
