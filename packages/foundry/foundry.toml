@@ -10,6 +10,7 @@ optimizer_runs = 200
 
 [rpc_endpoints]
 default_network = "http://127.0.0.1:8545"
+celo_sepolia = "https://forno.celo.org/sepolia"
 
 mainnet = "https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}"
 sepolia = "https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
@@ -38,6 +39,7 @@ localhost = "http://127.0.0.1:8545"
 [etherscan]
 polygonMumbai = { key = "${ETHERSCAN_API_KEY}" }
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
+celo_sepolia = { key = "${BLOCKSCOUT_API_KEY}", url = "https://celo-sepolia.blockscout.com/api" }
 
 [fmt]
 line_length = 120
