@@ -82,58 +82,8 @@ const TrustLendingApp = () => {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* Enhanced Retro Navigation Header */}
-      <nav className="bg-base-100 border-b-4 border-base-content shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center py-3 space-y-3 lg:space-y-0">
-            
-            {/* Left Section - Logo and Navigation */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
-              <div className="flex items-center space-x-3">
-                <h1 className="retro-title text-xl lg:text-2xl font-bold font-mono tracking-wider">LENDING_W3.0</h1>
-              </div>
-              
-              {/* Main Navigation Tabs */}
-              <div className="flex space-x-1">
-                {[
-                  { key: 'overview', label: 'OVERVIEW', icon: '●' },
-                  { key: 'bonds', label: 'TRUST_BONDS', icon: '◆' },
-                  { key: 'lending', label: 'LENDING_POOL', icon: '₿' }
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setActiveView(item.key as any)}
-                    className={`px-3 py-2 border-2 font-mono text-xs font-bold transition-all ${
-                      activeView === item.key
-                        ? 'border-primary bg-primary text-primary-content'
-                        : 'border-base-content bg-base-100 hover:bg-base-200'
-                    }`}
-                  >
-                    {item.icon} [{item.label}]
-                  </button>
-                ))}
-              </div>
-
-              {/* Secondary Actions */}
-              {/* <div className="flex space-x-2">
-                <button
-                  onClick={() => setShowFeaturesModal(true)}
-                  className="btn btn-sm btn-ghost font-mono hover:btn-outline"
-                  title="View System Features"
-                >
-                  [?] INFO
-                </button>
-                
-                <button
-                  className="btn btn-sm btn-ghost font-mono hover:btn-outline"
-                  title="System Settings"
-                >
-                  [⚙] CONFIG
-                </button>
-              </div> */}
-            </div>
-
-            {/* Right Section - User Dashboard */}
+      {/* Header moved to global Header component */}
+      {/* Right Section - User Dashboard */}
             <div className="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-2">
               
               {/* Data Display Panels */}

@@ -1,59 +1,40 @@
 "use client";
 
 import React, { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { hardhat } from "viem/chains";
-import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
-type HeaderMenuLink = {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-};
-
-export const menuLinks: HeaderMenuLink[] = [
-  {
-    label: "Home",
-    href: "/",
-  },
-  {
-    label: "Pitch",
-    href: "/pitch",
-  },
-  {
-    label: "Debug Contracts",
-    href: "/debug",
-    icon: <BugAntIcon className="h-4 w-4" />,
-  },
-];
-
-export const HeaderMenuLinks = () => {
+const RetroNavButtons = () => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeView = searchParams.get("view") || "overview";
+
+  const buttons = [
+    { key: "home", label: "HOME", href: "/", isActive: pathname === "/" && !searchParams.get("view") },
+    { key: "pitch", label: "PITCH", href: "/pitch", isActive: pathname === "/pitch" },
+    { key: "overview", label: "OVERVIEW", href: "/?view=overview", isActive: pathname === "/" && activeView === "overview" },
+    { key: "bonds", label: "TRUST_BONDS", href: "/?view=bonds", isActive: pathname === "/" && activeView === "bonds" },
+    { key: "lending", label: "LENDING_POOLS", href: "/?view=lending", isActive: pathname === "/" && activeView === "lending" },
+  ];
 
   return (
-    <>
-      {menuLinks.map(({ label, href, icon }) => {
-        const isActive = pathname === href;
-        return (
-          <li key={href}>
-            <Link
-              href={href}
-              passHref
-              className={`${
-                isActive ? "bg-secondary shadow-md" : ""
-              } hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
-            >
-              {icon}
-              <span>{label}</span>
-            </Link>
-          </li>
-        );
-      })}
-    </>
+    <div className="flex space-x-1">
+      {buttons.map(btn => (
+        <Link
+          key={btn.key}
+          href={btn.href}
+          className={`px-3 py-2 border-2 font-mono text-xs font-bold transition-all ${
+            btn.isActive ? "border-primary bg-primary text-primary-content" : "border-base-content bg-base-100 hover:bg-base-200"
+          }`}
+        >
+          {btn.label}
+        </Link>
+      ))}
+    </div>
   );
 };
 
@@ -82,21 +63,16 @@ export const Header = () => {
               burgerMenuRef?.current?.removeAttribute("open");
             }}
           >
-            <HeaderMenuLinks />
+            <li>
+              <RetroNavButtons />
+            </li>
           </ul>
         </details>
-        <Link href="/" passHref className="hidden lg:flex items-center gap-2 ml-4 mr-6 shrink-0">
-          <div className="flex relative w-10 h-10">
-            <Image alt="SE2 logo" className="cursor-pointer" fill src="/logo.svg" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold leading-tight">Scaffold-ETH</span>
-            <span className="text-xs">Ethereum dev stack</span>
-          </div>
-        </Link>
-        <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">
-          <HeaderMenuLinks />
-        </ul>
+        <div className="hidden lg:flex items-center gap-4 ml-2 mr-6 shrink-0">
+          <h1 className="retro-title text-xl lg:text-2xl font-bold font-mono tracking-wider">LENDING_W3.0</h1>
+          <RetroNavButtons />
+        </div>
+        <ul className="lg:hidden"><RetroNavButtons /></ul>
       </div>
       <div className="navbar-end grow mr-4">
         <RainbowKitCustomConnectButton />
