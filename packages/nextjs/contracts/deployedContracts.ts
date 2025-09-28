@@ -4,6 +4,27 @@
  */
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
-const deployedContracts = {} as const;
+// Import ABIs
+import { TRUST_CONTRACT_ABI } from "./TrustContract";
+import { TRUST_SCORE_ABI } from "./TrustScore";
+import { LENDING_POOL_ABI } from "./LendingPool";
+
+const deployedContracts = {
+  // Celo Sepolia (Chain ID: 11142220)
+  11142220: {
+    TrustContract: {
+      address: "0xe2726ce1021b21b231562c001a1ecfaa9c9893e2",
+      abi: TRUST_CONTRACT_ABI,
+    },
+    TrustScore: {
+      address: "0x6cbc62fc95208c4137c928e2a0079836c50f0d14",
+      abi: TRUST_SCORE_ABI,
+    },
+    LendingPool: {
+      address: "0x273be2224de0dd294c9885ec3d169ab0c7a0181c",
+      abi: LENDING_POOL_ABI,
+    },
+  },
+} as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

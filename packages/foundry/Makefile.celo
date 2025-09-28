@@ -1,0 +1,220 @@
+# Trust Protocol Foundry Makefile
+
+-include .env
+
+# Celo Sepolia Configuration
+CELO_SEPOLIA_RPC := https://forno.celo.org/sepolia
+CELO_SEPOLIA_CHAIN_ID := 11142220
+PRIVATE_KEY := 0xb1db46dc1e869bfbb6a33ed21a36f0f9af954c5f7fcec7980044a7de756b14b4
+EXPLORER_URL := https://celo-sepolia.blockscout.com
+
+# Original commands preserved
+.PHONY: build deploy generate-abis get-address account chain compile flatten fork format lint test verify
+
+DEPLOY_SCRIPT ?= script/Deploy.s.sol
+
+# setup wallet for anvil
+setup-anvil-wallet:
+	shx rm ~/.foundry/keystores/scaffold-eth-default 2>/dev/null; 	shx rm -rf broadcast/Deploy.s.sol/31337
+	cast wallet import --private-key 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6 --unsafe-password 'localhost' scaffold-eth-default
+
+# Start local chain
+chain: setup-anvil-wallet
+	anvil
+
+# Start a fork
+fork: setup-anvil-wallet
+	anvil --fork-url ${FORK_URL} --chain-id 31337
+
+# Original deploy command
+deploy:
+	@if [ ! -f "$(DEPLOY_SCRIPT)" ]; then 		echo "Error: Deploy script '$(DEPLOY_SCRIPT)' not found"; 		exit 1; 	fi
+	@if [ "$(RPC_URL)" = "localhost" ]; then 		if [ "$(ETH_KEYSTORE_ACCOUNT)" = "scaffold-eth-default" ]; then 			forge script $(DEPLOY_SCRIPT) --rpc-url localhost --password localhost --broadcast --legacy --ffi; 		else 			forge script $(DEPLOY_SCRIPT) --rpc-url localhost --broadcast --legacy --ffi; 		fi 	else 		forge script $(DEPLOY_SCRIPT) --rpc-url $(RPC_URL) --broadcast --legacy --ffi; 	fi
+
+# Deploy and generate ABIs
+deploy-and-generate-abis: deploy generate-abis 
+
+# Generate TypeScript ABIs
+generate-abis:
+	node scripts-js/generateTsAbis.js
+
+# List account
+account:
+	forge wallet list
+
+# Get contract address
+get-address:
+	@echo "Getting contract address..."
+	cast compute-address $(shell cast wallet address --keystore ~/.foundry/keystores/$(ETH_KEYSTORE_ACCOUNT) --password $(ETH_KEYSTORE_PASSWORD))
+
+# Build contracts
+build:
+	forge build
+
+# Test contracts  
+test:
+	forge test -vvv
+
+# Format
+format:
+	forge fmt
+
+# Lint
+lint:
+	forge fmt --check
+
+# Coverage
+coverage:
+	forge coverage --report lcov
+
+# ================================
+# CELO SEPOLIA DEPLOYMENT COMMANDS
+# ================================
+
+# Deploy all contracts to Celo Sepolia
+deploy-celo:
+	@echo "🚀 Deploying Trust Protocol to Celo Sepolia..."
+	@chmod +x deploy_celo_sepolia.sh
+	@./deploy_celo_sepolia.sh
+
+# Deploy individual contracts
+deploy-trust-contract:
+	@echo "🚀 Deploying TrustContract..."
+	forge script script/DeployTrustContract.s.sol:DeployTrustContract \
+		--rpc-url $(CELO_SEPOLIA_RPC) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast \
+		-vvv
+
+deploy-trust-score:
+	@echo "🚀 Deploying TrustScore..."
+	@if [ -z "$(TRUST_CONTRACT_ADDRESS)" ]; then \
+		echo "❌ Please set TRUST_CONTRACT_ADDRESS environment variable"; \
+		exit 1; \
+	fi
+	TRUST_CONTRACT_ADDRESS=$(TRUST_CONTRACT_ADDRESS) forge script script/DeployTrustScore.s.sol:DeployTrustScore \
+		--rpc-url $(CELO_SEPOLIA_RPC) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast \
+		-vvv
+
+deploy-lending-pool:
+	@echo "🚀 Deploying LendingPool..."
+	@if [ -z "$(TRUST_CONTRACT_ADDRESS)" ] || [ -z "$(TRUST_SCORE_ADDRESS)" ]; then \
+		echo "❌ Please set TRUST_CONTRACT_ADDRESS and TRUST_SCORE_ADDRESS environment variables"; \
+		exit 1; \
+	fi
+	TRUST_CONTRACT_ADDRESS=$(TRUST_CONTRACT_ADDRESS) \
+	TRUST_SCORE_ADDRESS=$(TRUST_SCORE_ADDRESS) \
+	forge script script/DeployLendingPool.s.sol:DeployLendingPool \
+		--rpc-url $(CELO_SEPOLIA_RPC) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast \
+		-vvv
+
+# Verify contracts on Celo Sepolia
+verify-celo:
+	@echo "🔍 Verifying contracts on Celo Sepolia..."
+	@chmod +x verify_contracts.sh
+	@./verify_contracts.sh
+
+# Verify individual contracts
+verify-trust-contract:
+	@if [ -z "$(TRUST_CONTRACT_ADDRESS)" ]; then \
+		echo "❌ Please set TRUST_CONTRACT_ADDRESS environment variable"; \
+		exit 1; \
+	fi
+	forge verify-contract \
+		--chain celo_sepolia \
+		--compiler-version 0.8.20 \
+		$(TRUST_CONTRACT_ADDRESS) \
+		contracts/TrustContract.sol:TrustContract
+
+verify-trust-score:
+	@if [ -z "$(TRUST_CONTRACT_ADDRESS)" ] || [ -z "$(TRUST_SCORE_ADDRESS)" ]; then \
+		echo "❌ Please set TRUST_CONTRACT_ADDRESS and TRUST_SCORE_ADDRESS environment variables"; \
+		exit 1; \
+	fi
+	forge verify-contract \
+		--chain celo_sepolia \
+		--compiler-version 0.8.20 \
+		--constructor-args $$(cast abi-encode "constructor(address)" $(TRUST_CONTRACT_ADDRESS)) \
+		$(TRUST_SCORE_ADDRESS) \
+		contracts/TrustScore.sol:TrustScore
+
+verify-lending-pool:
+	@if [ -z "$(TRUST_CONTRACT_ADDRESS)" ] || [ -z "$(TRUST_SCORE_ADDRESS)" ] || [ -z "$(LENDING_POOL_ADDRESS)" ]; then \
+		echo "❌ Please set all contract addresses as environment variables"; \
+		exit 1; \
+	fi
+	forge verify-contract \
+		--chain celo_sepolia \
+		--compiler-version 0.8.20 \
+		--constructor-args $$(cast abi-encode "constructor(address,address)" $(TRUST_CONTRACT_ADDRESS) $(TRUST_SCORE_ADDRESS)) \
+		$(LENDING_POOL_ADDRESS) \
+		contracts/LendingPool.sol:LendingPool
+
+# ================================
+# UTILITY COMMANDS
+# ================================
+
+# Show deployment info
+info:
+	@echo "📋 Trust Protocol Deployment Information"
+	@echo "=========================================="
+	@echo "Chain: Celo Sepolia ($(CELO_SEPOLIA_CHAIN_ID))"
+	@echo "RPC: $(CELO_SEPOLIA_RPC)"
+	@echo "Explorer: $(EXPLORER_URL)"
+	@echo ""
+	@if [ -f "deployments/celo_sepolia_addresses.txt" ]; then \
+		echo "Deployed Addresses:"; \
+		cat deployments/celo_sepolia_addresses.txt; \
+	else \
+		echo "No deployment addresses found"; \
+	fi
+
+# Check wallet balance
+balance:
+	@echo "💰 Checking deployer wallet balance..."
+	cast balance --rpc-url $(CELO_SEPOLIA_RPC) $$(cast wallet address --private-key $(PRIVATE_KEY))
+
+# Make scripts executable
+setup-celo:
+	@echo "🔧 Setting up Celo Sepolia deployment scripts..."
+	@chmod +x deploy_celo_sepolia.sh
+	@chmod +x deploy_individual.sh
+	@chmod +x verify_contracts.sh
+	@mkdir -p deployments
+	@echo "✅ Celo setup complete!"
+
+# Help
+help-celo:
+	@echo "Trust Protocol Celo Sepolia Commands"
+	@echo "===================================="
+	@echo ""
+	@echo "Setup:"
+	@echo "  make setup-celo         - Setup deployment scripts"
+	@echo "  make balance            - Check deployer wallet balance"
+	@echo ""
+	@echo "Deployment:"
+	@echo "  make deploy-celo        - Deploy all contracts to Celo Sepolia"
+	@echo "  make deploy-trust-contract    - Deploy TrustContract only"
+	@echo "  make deploy-trust-score       - Deploy TrustScore (needs TRUST_CONTRACT_ADDRESS)"
+	@echo "  make deploy-lending-pool      - Deploy LendingPool (needs both addresses)"
+	@echo ""
+	@echo "Verification:"
+	@echo "  make verify-celo        - Verify all contracts"
+	@echo "  make verify-trust-contract    - Verify TrustContract"
+	@echo "  make verify-trust-score       - Verify TrustScore"
+	@echo "  make verify-lending-pool      - Verify LendingPool"
+	@echo ""
+	@echo "Info:"
+	@echo "  make info               - Show deployment information"
+	@echo ""
+	@echo "Example Flow:"
+	@echo "  1. make setup-celo"
+	@echo "  2. make balance"
+	@echo "  3. make deploy-celo"
+	@echo "  4. make verify-celo"
+
+.PHONY: deploy-celo deploy-trust-contract deploy-trust-score deploy-lending-pool verify-celo verify-trust-contract verify-trust-score verify-lending-pool info balance setup-celo help-celo
