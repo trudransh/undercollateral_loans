@@ -152,7 +152,7 @@
 }
 
 .btn-ghost {
-  background: transparent;
+  background: var(--color-base-100);
   border: var(--retro-border);
   box-shadow: none;
 }
@@ -220,6 +220,30 @@
   box-shadow: var(--retro-shadow);
   border-radius: 0;
   background: var(--color-base-100);
+}
+
+/* Ensure common surfaces are not transparent (prevents overlay glitches) */
+@layer base {
+  nav,
+  header,
+  main,
+  section,
+  footer,
+  aside {
+    background-color: var(--color-base-100);
+  }
+
+  .navbar,
+  .card,
+  .menu,
+  .dropdown,
+  .dropdown-content,
+  .modal,
+  .modal-box,
+  .table,
+  .alert {
+    background-color: var(--color-base-100) !important;
+  }
 }
 
 /* Retro Alert Styles */

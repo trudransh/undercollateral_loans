@@ -131,7 +131,7 @@ const TrustBondManager = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             <span className="text-primary font-bold">███</span>
-            <span className="font-bold text-lg">TRUST_BOND_MANAGER.EXE</span>
+            <span className="font-bold text-lg">TRUST_CONTRACT_MANAGER</span>
           </div>
           <div className="text-xs">
             <span className="bg-primary text-primary-content px-2 py-1">v2.1.3</span>
@@ -233,7 +233,7 @@ const TrustBondManager = () => {
             disabled={!partnerAddress || !stakeAmount}
             className="w-full border-2 border-base-content bg-primary text-primary-content py-3 px-6 font-mono font-bold hover:bg-primary-focus disabled:bg-base-300 disabled:text-base-content disabled:cursor-not-allowed transition-all"
           >
-            [EXECUTE] CREATE_TRUST_BOND.EXE
+            [EXECUTE] CREATE_TRUST_CONTRACT
           </button>
         </div>
       )}
