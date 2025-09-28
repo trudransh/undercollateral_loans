@@ -1,101 +1,100 @@
-# Trust Bond Lending – Undercollateralized Loans on Ethereum (Celo Sepolia Demo)
+## Trust Bond Lending
+Undercollateralized lending, built on cooperative trust.
 
-A hackathon project implementing an undercollateralized lending protocol powered by cooperation-backed trust bonds. It ships a Foundry smart-contract suite and a Next.js (Scaffold‑ETH 2) frontend for a judge‑friendly demo.
+We’re exploring a simple idea with big implications: if two people choose to cooperate on‑chain, that cooperation itself can secure credit. Our protocol lets users form “trust bonds,” earn yield while both sides behave, and unlock borrowing power without over‑collateralizing their lives.
 
-## Key Idea
-- Borrowers form trust bonds with partners and stake ETH.
-- While cooperating, bonds accrue yield; defect/exit applies penalties.
-- LendingPool allows borrowing against active trust bonds (up to 80% LTV) with lender protections via slashing, freezing, and yield‑based recovery.
+### Why this matters
+Today, most on‑chain credit requires 150%+ collateral. That excludes the people who need it most. By using incentives instead of hard collateral alone—think: cooperation yield, fair exits, and slashing for bad behavior—we can make credit more inclusive without making lenders reckless.
 
-## Monorepo Structure
-- `packages/foundry`: Solidity contracts, tests, and deployment scripts (Foundry)
-- `packages/nextjs`: Next.js app (Scaffold‑ETH 2), Wagmi + RainbowKit UI
+### What’s in the box
+- Smart contracts (Foundry) that model cooperative bonds, trust scoring, and a lending pool.
+- A clean, black‑and‑white Next.js app (Scaffold‑ETH 2) that’s fast to demo and easy to reason about.
+- A judge‑friendly pitch view at `/pitch` with keyboard navigation.
 
-## Smart Contracts (packages/foundry)
-- `TrustContract.sol`
-  - Create/add stake to trust bonds, exit (mild penalty), defect (heavy penalty)
-  - Accrue cooperation yield; freeze/unfreeze by authorized lenders
-  - Claim yields, compute user total value for lending collateralization
-- `TrustScore.sol`
-  - Simplified trust scoring: rewards number/age of bonds; supports penalty offsets
-- `LendingPool.sol`
-  - Borrow using all user bonds as collateral (MAX_LTV=80%)
-  - Interest rate discounts from trust score; repay/liquidate flows
-  - Freezing + yield‑claim on default for lender protection
+---
 
-### Dev Tooling
-- Foundry config in `packages/foundry/foundry.toml`
-- Makefile targets for build/test/deploy/verify
-- Deployment helper scripts under `packages/foundry/deployments` and `packages/foundry/script`
+## Architecture at a glance
+- `TrustContract` — create a bond with a partner, add stake, accrue cooperation yield, exit (mild penalty), or defect (heavy penalty). Lenders can freeze/unfreeze and claim yields to cover risk.
+- `TrustScore` — a pragmatic scoring model for the MVP: weighs number of bonds and time active; tracks penalty offsets. Purposefully simple so we can ship, test, and iterate.
+- `LendingPool` — lends against the total value of a user’s active bonds (up to 80% LTV), with rate discounts from trust score, and clear repay/default flows.
 
-## Frontend (packages/nextjs)
-- New degen‑styled black/white UI with modern UX
-- `TrustLendingApp.tsx`: high‑level app views
-- `TrustBondManager.tsx`: create/manage trust bonds
-- `LendingPoolDashboard_New.tsx`: borrow, lend, manage loans
-- Wallet connect/disconnect in navbar via RainbowKit; address dropdown with copy/QR/explorer/switch network
-- Judge deck at `/pitch` (keyboard nav: ←/→, H/L)
+The contracts are event‑rich and designed for operational clarity. We’ve prioritized safety basics (reentrancy guards, owner‑gated admin) and operational controls (freeze, yield‑based recovery) over theoretical completeness. This is opinionated by design.
 
-### Smart Contract Integration
-- Contract ABIs/addresses in `packages/nextjs/contracts/*` and `contracts/deployedContracts.ts`
-- Use Scaffold‑ETH 2 hooks:
-  - `useScaffoldReadContract` for reads
-  - `useScaffoldWriteContract` for writes
-  - `useScaffoldEventHistory` for events
+---
 
-## Run Locally
+## Frontend
+- `TrustLendingApp` — the shell: Overview, Bonds, and Lending views.
+- `TrustBondManager` — create and manage cooperative bonds.
+- `LendingPoolDashboard_New` — borrow, lend, and manage loans.
+- Wallet UX — RainbowKit in the navbar with connect, disconnect, copy, QR, explorer, and network switch.
+- Pitch mode — `/pitch` shows a concise, keyboard‑driven deck for live demos.
+
+Under the hood, we stick to Scaffold‑ETH 2 conventions:
+- Reads — `useScaffoldReadContract`
+- Writes — `useScaffoldWriteContract`
+- Events — `useScaffoldEventHistory`
+Addresses and ABIs are centralized in `packages/nextjs/contracts/deployedContracts.ts`.
+
+---
+
+## Local setup
 ```bash
-# 1) install deps
+# install
 yarn install
 
-# 2) run local chain (optional)
-# in another terminal: yarn chain
+# optional: run local chain for debugging
+yarn chain
 
-# 3) start frontend
+# start the app
 yarn start
-# open http://localhost:3000 (or /pitch for the deck)
+# visit http://localhost:3000 (or /pitch)
 ```
 
-## Deploy (Celo Sepolia)
-Prereqs: Foundry installed; a funded Celo Sepolia account; working RPC URL.
+---
+
+## Deploy to Celo Sepolia
+You’ll need Foundry, a funded testnet account, and a working RPC (we use BlockPI’s public endpoint).
 
 ```bash
 cd packages/foundry
 forge build
 
-# recommended public RPC
 export RPC_URL=https://celo-sepolia.blockpi.network/v1/rpc/public
 export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 
-# Deploy + verify (Blockscout)
+# one‑shot deploy + verify (Blockscout)
 make deploy-celo-sepolia-verify
 
-# OR deploy only
+# or deploy then verify
 make deploy-celo-sepolia
-
-# Manual verification helper
 make verify-celo-sepolia \
   CONTRACT_TRUST=0x... \
   CONTRACT_SCORE=0x... \
   CONTRACT_LENDING=0x...
 ```
 
-After deployment, add addresses to `packages/nextjs/contracts/deployedContracts.ts` and restart the frontend.
+After deploying, update `packages/nextjs/contracts/deployedContracts.ts` and reload the app.
 
-## Demo Flow for Judges (90s)
-1) Create a trust bond with a partner; show cooperation yield ticking
-2) Borrow against the bond (up to 80% LTV)
-3) Trigger exit/defect → see slashing and protections
-4) Lender deposits liquidity and earns yield
+---
 
-## Security & Risk
-- Reentrancy guards, owner‑gated admin
-- Freezing mechanism; conservative LTV
-- Yield‑based recovery on default
+## Demo script (≈90 seconds)
+1) Create a trust bond → show cooperation yield alive and well.
+2) Borrow against that bond (up to 80% LTV) → confirm receipt.
+3) Simulate exit/defect → highlight fair exit and slashing safeguards.
+4) Show lender earnings and recovery via yields.
 
-## Notes
-- Trust scoring is simplified for MVP; parameters can be tuned
-- All contract operations are gas‑aware and event‑rich for easy monitoring
+This is intentionally crisp. Judges should see the value, not wrestle the UI.
+
+---
+
+## Risk, safety, and what’s next
+- Safety first: reentrancy guards, owner controls, freezing, conservative LTV.
+- Recovery: accrued yields help cover losses on defaults.
+- Next: richer trust modeling, oracle inputs, analytics for lenders, and multi‑chain.
+
+We’re not pretending trust can be solved in one weekend. But we can ship an MVP that moves the conversation forward—and gives people a reason to care.
+
+---
 
 ## License
 MIT
