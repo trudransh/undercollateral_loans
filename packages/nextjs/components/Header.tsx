@@ -16,7 +16,7 @@ const RetroNavButtons = () => {
   const buttons = [
     { key: "home", label: "HOME", href: "/", isActive: pathname === "/" && !searchParams.get("view") },
     { key: "pitch", label: "PITCH", href: "/pitch", isActive: pathname === "/pitch" },
-    { key: "overview", label: "OVERVIEW", href: "/?view=overview", isActive: pathname === "/" && activeView === "overview" },
+    // { key: "overview", label: "OVERVIEW", href: "/?view=overview", isActive: pathname === "/" && activeView === "overview" },
     { key: "bonds", label: "TRUST_BONDS", href: "/?view=bonds", isActive: pathname === "/" && activeView === "bonds" },
     { key: "lending", label: "LENDING_POOLS", href: "/?view=lending", isActive: pathname === "/" && activeView === "lending" },
   ];
