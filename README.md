@@ -1,80 +1,101 @@
-# 🏗 Scaffold-ETH 2
+# Trust Bond Lending – Undercollateralized Loans on Ethereum (Celo Sepolia Demo)
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+A hackathon project implementing an undercollateralized lending protocol powered by cooperation-backed trust bonds. It ships a Foundry smart-contract suite and a Next.js (Scaffold‑ETH 2) frontend for a judge‑friendly demo.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+## Key Idea
+- Borrowers form trust bonds with partners and stake ETH.
+- While cooperating, bonds accrue yield; defect/exit applies penalties.
+- LendingPool allows borrowing against active trust bonds (up to 80% LTV) with lender protections via slashing, freezing, and yield‑based recovery.
 
-⚙️ Built using NextJS, RainbowKit, Foundry, Wagmi, Viem, and Typescript.
+## Monorepo Structure
+- `packages/foundry`: Solidity contracts, tests, and deployment scripts (Foundry)
+- `packages/nextjs`: Next.js app (Scaffold‑ETH 2), Wagmi + RainbowKit UI
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+## Smart Contracts (packages/foundry)
+- `TrustContract.sol`
+  - Create/add stake to trust bonds, exit (mild penalty), defect (heavy penalty)
+  - Accrue cooperation yield; freeze/unfreeze by authorized lenders
+  - Claim yields, compute user total value for lending collateralization
+- `TrustScore.sol`
+  - Simplified trust scoring: rewards number/age of bonds; supports penalty offsets
+- `LendingPool.sol`
+  - Borrow using all user bonds as collateral (MAX_LTV=80%)
+  - Interest rate discounts from trust score; repay/liquidate flows
+  - Freezing + yield‑claim on default for lender protection
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+### Dev Tooling
+- Foundry config in `packages/foundry/foundry.toml`
+- Makefile targets for build/test/deploy/verify
+- Deployment helper scripts under `packages/foundry/deployments` and `packages/foundry/script`
 
-## Requirements
+## Frontend (packages/nextjs)
+- New degen‑styled black/white UI with modern UX
+- `TrustLendingApp.tsx`: high‑level app views
+- `TrustBondManager.tsx`: create/manage trust bonds
+- `LendingPoolDashboard_New.tsx`: borrow, lend, manage loans
+- Wallet connect/disconnect in navbar via RainbowKit; address dropdown with copy/QR/explorer/switch network
+- Judge deck at `/pitch` (keyboard nav: ←/→, H/L)
 
-Before you begin, you need to install the following tools:
+### Smart Contract Integration
+- Contract ABIs/addresses in `packages/nextjs/contracts/*` and `contracts/deployedContracts.ts`
+- Use Scaffold‑ETH 2 hooks:
+  - `useScaffoldReadContract` for reads
+  - `useScaffoldWriteContract` for writes
+  - `useScaffoldEventHistory` for events
 
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
-
-## Quickstart
-
-To get started with Scaffold-ETH 2, follow the steps below:
-
-1. Install dependencies if it was skipped in CLI:
-
-```
-cd my-dapp-example
+## Run Locally
+```bash
+# 1) install deps
 yarn install
-```
 
-2. Run a local network in the first terminal:
+# 2) run local chain (optional)
+# in another terminal: yarn chain
 
-```
-yarn chain
-```
-
-This command starts a local Ethereum network using Foundry. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/foundry/foundry.toml`.
-
-3. On a second terminal, deploy the test contract:
-
-```
-yarn deploy
-```
-
-This command deploys a test smart contract to the local network. The contract is located in `packages/foundry/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/foundry/script` to deploy the contract to the network. You can also customize the deploy script.
-
-4. On a third terminal, start your NextJS app:
-
-```
+# 3) start frontend
 yarn start
+# open http://localhost:3000 (or /pitch for the deck)
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+## Deploy (Celo Sepolia)
+Prereqs: Foundry installed; a funded Celo Sepolia account; working RPC URL.
 
-Run smart contract test with `yarn foundry:test`
+```bash
+cd packages/foundry
+forge build
 
-- Edit your smart contracts in `packages/foundry/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/foundry/script`
+# recommended public RPC
+export RPC_URL=https://celo-sepolia.blockpi.network/v1/rpc/public
+export PRIVATE_KEY=0xYOUR_PRIVATE_KEY
 
+# Deploy + verify (Blockscout)
+make deploy-celo-sepolia-verify
 
-## Documentation
+# OR deploy only
+make deploy-celo-sepolia
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
+# Manual verification helper
+make verify-celo-sepolia \
+  CONTRACT_TRUST=0x... \
+  CONTRACT_SCORE=0x... \
+  CONTRACT_LENDING=0x...
+```
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+After deployment, add addresses to `packages/nextjs/contracts/deployedContracts.ts` and restart the frontend.
 
-## Contributing to Scaffold-ETH 2
+## Demo Flow for Judges (90s)
+1) Create a trust bond with a partner; show cooperation yield ticking
+2) Borrow against the bond (up to 80% LTV)
+3) Trigger exit/defect → see slashing and protections
+4) Lender deposits liquidity and earns yield
 
-We welcome contributions to Scaffold-ETH 2!
+## Security & Risk
+- Reentrancy guards, owner‑gated admin
+- Freezing mechanism; conservative LTV
+- Yield‑based recovery on default
 
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+## Notes
+- Trust scoring is simplified for MVP; parameters can be tuned
+- All contract operations are gas‑aware and event‑rich for easy monitoring
+
+## License
+MIT
