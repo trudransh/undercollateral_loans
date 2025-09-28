@@ -170,18 +170,18 @@ const TrustLendingApp = () => {
               {/* User Status & Controls */}
               <div className="flex items-center space-x-1">
                 {/* Connection Status */}
-                <div className="border-2 border-base-content px-2 py-2 bg-base-100 flex items-center space-x-1">
+                {/* <div className="border-2 border-base-content px-2 py-2 bg-base-100 flex items-center space-x-1">
                   <div className="w-2 h-2 bg-primary rounded-full blink"></div>
                   <span className="font-mono text-xs">ONLINE</span>
-                </div>
+                </div> */}
                 
                 {/* User Address */}
-                <div className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs">
+                {/* <div className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs">
                   👤 {address?.slice(0, 4)}...{address?.slice(-4)}
-                </div>
+                </div> */}
                 
                 {/* Actions Menu */}
-                <div className="dropdown dropdown-end">
+                {/* <div className="dropdown dropdown-end">
                   <div tabIndex={0} role="button" className="border-2 border-base-content px-2 py-2 bg-base-100 font-mono text-xs hover:bg-base-200 cursor-pointer">
                     [⋮]
                   </div>
@@ -194,7 +194,7 @@ const TrustLendingApp = () => {
                       <a href="#" className="hover:bg-red-100 text-error">[🚪] DISCONNECT</a>
                     </li>
                   </ul>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
